@@ -1,22 +1,22 @@
 # Exercise 1.3
 
 ## 1
-Yes, I do. This is due to the reading thread accessing its cached value of MutableInteger, which is never updated by the main thread.
+Yes, the `t` thread hangs. This is because `t` is accessing the instance of `MutableInteger` in the cache memory of the CPU core it is running on, which is not the same instance updated by the main thread.
 
 ## 2
-Yes, it does. Indeed, `synchronized` implies visibility, which is out ultimate problem.
+Yes, the program executes as expected. Indeed, the `synchronized` keyward in Java not only ensures mutual exclusion, but also guarantees visibility, that is the values are read and written from and to the main memory.
 
 ## 3
-No, it doesn't. This is due to the lack of visibility of the value in the reading phase.
-It might happen that, due to the way threads are scheduled, the value is set before the other thread first reads it: this leads to a correct execution of the program, but is absolutely casual and not to be relied upon.
-Even though there are no issues strictly related to concurrency when reading, the Java impolementation on modern computer architectures creates other problems, in particular regarding multiple levels of cache memory: in fact, the default behavior is to operate on cache memory as much as possible, while the shared-memory concurrency model requires all threads to use the same memory. This goal can be achieved by using either the `volatile` or `synchronized` keywords, the latter assuring also atomicity.
+No, the `t` thread hangs again. This is due to the lack of visibility of the value stored in the `MutableInteger` instance when it is read.
+However, in some cases the program still terminates correctly: in fact, it might happen that, due to the way threads are scheduled, the value is set before the other thread first reads it. Nevertheless, this phenomenon is absolutely casual and not to be relied upon.
+This bug arised when the `synchronized` keyword was removed: in fact, in addition to mutual exclusion, it also guarantees visibility.
 
 ## 4
-Yes, it does. The `volatile` keyword alone is enough in this case, because there is no need for atomicity, which is granted by `synchronized`: all write operations on the shared resource don't require reading any shared resource first, which makes atomicity redundant.
+Yes, the program executes as expected again. Indeed, the `sychronized` keyword is redundant in this case, because the bug is caused by lack of visibility, and not by absence of atomicity: in fact, all write operations on the shared resource don't require reading any shared resource first. This means that the `volatile` keyword alone is sufficient to solve it.
 
 # 3
 ## 1
-No, it's not. These are the results:
+The results are incorrect, which means that the Mystery class is not thread-safe. Below, the output of 20 executions of the program.
 Sum is 1482544.000000 and should be 2000000.000000
 Sum is 1484057.000000 and should be 2000000.000000
 Sum is 1478911.000000 and should be 2000000.000000
@@ -39,10 +39,10 @@ Sum is 1606210.000000 and should be 2000000.000000
 Sum is 1576142.000000 and should be 2000000.000000
 
 ## 2
-The Mystery class is not thread-safe because of the difference in the locking mechanism for instance method and static ones: the former block on the instance they are called on, while the latter on the instance of the metaclass for the class they belong to. Therefore, by locking on two different objects, mutual exclusion is faulty.
+The Mystery class is not thread-safe because of the difference in the locking mechanism for instance method and static ones: the former block on the instance they are called on, while the latter on the instance of the metaclass for the class they belong to. Therefore, because the mutual exclusion happpens on two different objects, mutual exclusion is faulty.
 
 ## 3
-Mystery class has been made thread-safe by having the addInstance() methos acquire the lock of the same object as the static methods, that is Mystery.class. The oposite is not possible, since static methods cannot access the instance object. Following, the results.
+Mystery class has been made thread-safe by having the addInstance() method acquire the lock of the same object as the static methods, that is Mystery.class. The oposite is not possible, since static methods cannot access the instance object. Following, the results.
 Sum is 2000000.000000 and should be 2000000.000000
 Sum is 2000000.000000 and should be 2000000.000000
 Sum is 2000000.000000 and should be 2000000.000000
