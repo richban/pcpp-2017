@@ -6,12 +6,12 @@ public class TestLocking0 {
     final int count = 1_000_000;
     Mystery m = new Mystery();
     Thread t1 = new Thread(() -> { 
-	for (int i=0; i<count; i++)
-	  m.addInstance(1); 
+    for (int i=0; i<count; i++)
+      m.addInstance(1); 
       });
     Thread t2 = new Thread(() -> { 
-	for (int i=0; i<count; i++)
-	  m.addStatic(1); 
+    for (int i=0; i<count; i++)
+      m.addStatic(1); 
       });
     t1.start(); t2.start();
     try { t1.join(); t2.join(); } catch (InterruptedException exn) { }
@@ -20,17 +20,19 @@ public class TestLocking0 {
 }
 
 class Mystery {
-  private static double sum = 0;
+    private static double sum = 0;
 
-  public static synchronized void addStatic(double x) {
-    sum += x;
-  }
+    public static synchronized void addStatic(double x) {
+        sum += x;
+    }
 
-  public synchronized void addInstance(double x) {
-    sum += x;
-  }
+    public void addInstance(double x) {
+        synchronized (Mystery.class) {
+            sum += x;
+        }
+    }
 
-  public static synchronized double sum() {
-    return sum;
-  }
+    public static synchronized double sum() {
+        return sum;
+    }
 }
