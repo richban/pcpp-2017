@@ -1,16 +1,14 @@
 Exercise 1.2
  1) Describe a scenario involving the two threads where this happens.
-  Both threads end up sleeping 50 miliseconds before writing a bar, but the time where they started sleeping alternate as
-  there is no guarantee that both threads will be at the same line of execution at any time.
-  DAVIDE CORRIGE: I think they wanted something like the following.
-  Thread 1 writes the pipe, then the system schedules Thread 2 which prints both the pipe and the dash and finally Thread 1 resumes printing a dash again.
+  Thread 1 writes the vertical bar, then the system schedules Thread 2 which prints both the vertical bar and the dash and finally Thread 1 resumes printing a dash again.
 
  2) Explain why.
   The synchronized keyword on a method creates an exclusive lock on the instance object of Printer. Since both threads are
   accessing the same instance of Printer, this locking will ensure mutual exclusion on the print() method, hence making the
   race condition that results in improper output impossible.
 
-  3) and 4) DAVIDE NOTE: Should we sumbit code snippets? At least for 3), since it would be overridden by 4)
+  3) and 4) 
+    See Printer.java and PrinterTester.java
 
 Exercise 1.4
 
@@ -18,7 +16,11 @@ Exercise 1.4
 
 2) It is faster, 10 thread version takes 3152ms according to Measure-Command in windows powershell.
 
-3) No, because incrementing using count = count + 1 is no longer atomic. Furthremore, 64 bit java uses long primitives that when changed involves changing two seperate 32 bit registers that are not threadsafe. (DAVIDE NOTE: Are you sure? I think your machine is 64 bit, but they might not be used in the ALU as far as I know)
+3) No, because incrementing using count = count + 1 is no longer atomic. Furthermore according to Java Concurrency in Practice, 64-bit long and double values to be treated as two 32-bit values.
+Java language specification for Java 8 at the bottom of this link: http://docs.oracle.com/javase/specs/jls/se8/html/jls-17.html#jls-17.7 also says the following:
+a single write to a non-volatile long or double value is treated as two separate writes: one to each 32-bit half. This can result in a situation where a thread sees the first 32 bits of a 64-bit value from one write, and the second 32 bits from another write.
+
+In other words writing/reading long are not treatsafe or atomic regardless of using 32bit or 64bit and as such count should be made volatile, be turned into AtomicLong or have some sort of synchronization like before.
 
 4) In theory synchronization promises visibility and count is also not a volatile variable, so there will be no promise of visibility. 
    Entering a synchronized block will have all changes visible to you, exiting a block will ensure that changes are written to memory and thus visible to other other threads.
