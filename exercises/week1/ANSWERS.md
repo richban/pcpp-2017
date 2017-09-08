@@ -21,6 +21,8 @@ In order to obtain the right results (0) we have to use the synchronized which e
 
 ## 1.5
 
+# Exercise 1.2
+
 
 # Exercise 1.3
 
@@ -87,3 +89,21 @@ Sum is 2000000.000000 and should be 2000000.000000
 Sum is 2000000.000000 and should be 2000000.000000
 Sum is 2000000.000000 and should be 2000000.000000
 Sum is 2000000.000000 and should be 2000000.000000
+
+# Exercise 1.8
+
+## 1
+*Explain why after 10 million calls to MysteryB.increment() and 10 million concurrent calls to MysteryB.increment4(), the resulting value of count is rarely the expected 50,000,000*
+
+`synchronized` static methods lock on the metaclass instance of the class they belong to. `MysteryB` is accessing count in `MysteryA` through inheritance, but it is still a different class, which means that it does not lock on the same object as `MysteryA`. Therefore, the methods are not mutually exclusive.
+
+Syncronizing the static method makes a synchronize block in the body that syncronize on MysteryB.class. MysteryA increment will do the same but on MysteryA.class. Point here is that
+access and changes to the shared value count that needs to be syncronized is syncronized using locks obtained from two different objects. Therefore we get a wrong result as there is 
+actually not proper mutural exclusion going on.
+
+# 2
+*Explain how one can use an explicit lock object and synchronized statements (not synchronized methods) to change the locking scheme, so that the result is always the expected 50,000,000.*
+
+By explicitly specifying the object to be used for locking it is possible to have all the methods lock on the same object, hence achieving mutual exclusion. One possibility is to have a dedicated `protected` object in `MysteryA`, or to have all subclasses lock on the superclass metaclass instance, that is `MysteryA`.
+
+Make a syncronize block on increment that locks on MysteryA.class or an object in MysteryA that is available for both MysteryA and MysteryB. (CHECK BEFORE HANDIN).

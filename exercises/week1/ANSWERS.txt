@@ -50,24 +50,12 @@ Exercise 1.7
 even if multiple concurrent threads work on multiple DoubleArrayList instances at the same time.
 You may ignore the allLists field for now.
 
-You could make totalSize volatile. Furthermore totalSize++; is not atomic. Therefore mutural exclusion should make a synchronized block for that statement under add.
+You could make totalSize volatile. Furthermore totalSize++; is not atomic. Therefore mutural exclusion should make a synchronized block for that statement under add, locking on the metaclass instance.
 
 2)  Explain how one can make the class thread-safe enough so that the allLists field is maintained correctly even if multiple concurrent threads create new DoubleArrayList instances at the same time.
 
 
 allLists is not thread-safe. Therefore there must be synchronization on calls to allLists methods. Creation of new DoubleArrayLists are thread-safe, but calling methods on the static allLists is not. The locking must be on the allLists object as the class itself is not static and
-multiple instances therefore would allow for multiple locks to be obtained if this was used.
+multiple instances therefore would allow for multiple locks to be obtained if this was used. DAVIDE: volatile?
 
 
-Exercise 1.8
-
-1) Explain why after 10 million calls to MysteryB.increment() and 10 million concurrent calls to MysteryB.increment4(), the resulting value of count is rarely the expected 50,000,000
-
-Syncronizing the static method makes a synchronize block in the body that syncronize on MysteryB.class. MysteryA increment will do the same but on MysteryA.class. Point here is that
-access and changes to the shared value count that needs to be syncronized is syncronized using locks obtained from two different objects. Therefore we get a wrong result as there is 
-actually not proper mutural exclusion going on.
-
-2) Explain how one can use an explicit lock object and synchronized statements (not synchronized methods) to change the locking scheme, so that the result is always the expected 50,000,000.
-
-
-Make a syncronize block on increment that locks on MysteryA.class or an object in MysteryA that is available for both MysteryA and MysteryB. (CHECK BEFORE HANDIN).
