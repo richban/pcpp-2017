@@ -25,24 +25,24 @@ In addition to showing that my laptop is clearly not a computing powerhouse, the
 The answer is the same as in the seial case, that is 18703729. The `time` information, however, differs significantly:
 
 ```bash
-real    0m3.568s
-user    0m13.377s
-sys     0m0.024s
+real    0m3.617s
+user    0m13.535s
+sys     0m0.020s
 ```
 On my dual-core, hyper threaded CPU the wall time is approximately one fourth of the CPU time, which means that all four virtual cores were used.
 
 ## 4
 *Could one implement MyAtomicInteger without synchronization, just using a volatile field? Why or why not?*
 
-No, the `volatile` field is not enough in this case. In fact, we are facing an instance of the well-known Readers-Writers concurrency problem: readers do not need to act in mutual exclusion (indeed `volatile` is needed due to Java implementation), while writers do. which in Java terms means necessity for the `synchronized` keyword on writing parts.
+No, the `volatile` field is not enough in this case. In fact, we are facing an instance of the well-known Readers-Writers concurrency problem: readers do not need to act in mutual exclusion (indeed `volatile` is needed due to Java implementation), while writers do, which in Java terms means necessity for the `synchronized` keyword on writing code sections.
 
 ## 5
 *Solve the same problem but use the AtomicInteger class from the java.util.concurrent.atomic package instead of MyAtomicInteger. Is there any noticeable difference in speed or result? Should the AtomicInteger field be declared final?*
 
-Comparing to the homebrew `MyAtomicInteger` class, when using `ÀtomicInteger` from Java library, both the wall and the CPU time increased of roughly 11%, regardless of if being `final` or not. We do not know why this happens, and can only speculate that our lightweight, case-suited class performs better in these conditions. Following, the unic `time` command output:
+Comparing to the homebrew `MyAtomicInteger` class, when using `ÀtomicInteger` from Java library, both the wall and the CPU time decreased of roughly 2%, regardless of if being `final` or not. As expectable, the built-in class performs better than ours.
 
 ```bash
-real    0m3.919s
-user    0m14.927s
-sys     0m0.020s
+real    0m3.556s
+user    0m13.138s
+sys     0m0.028s
 ```

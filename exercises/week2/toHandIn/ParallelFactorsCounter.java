@@ -2,23 +2,6 @@
  * Exercise 2.1, question 3
  */
 
-class SplitCounter extends Thread {
-    private MyAtomicInteger count;
-    private int start, stop;
-    
-    public SplitCounter(MyAtomicInteger count, int start, int stop) {
-        this.count = count;
-        this.start = start;
-        this.stop = stop;
-    }
-
-    public void run() {
-        for (int k = start; k < stop; ++k) {
-            count.addAndGet(FactorsCounter.countFactors(k));
-        }
-    }
-}
-
 public class ParallelFactorsCounter {
     public static void main(String[] args) {
         long upperBound = 5_000_000;
@@ -26,11 +9,17 @@ public class ParallelFactorsCounter {
         int threadSplitLength = 500_000;
 
         Thread[] threads = new Thread[threadsCount];
-        MyAtomicInteger count = new MyAtomicInteger();
+        final MyAtomicInteger count = new MyAtomicInteger();
 
         for (int k = 0; k < threadsCount; ++k) {
-            threads[k] = new SplitCounter(count,
-                k * threadSplitLength, (k + 1) * threadSplitLength);
+            final int start = k * threadSplitLength;
+            final int stop = (k + 1) * threadSplitLength;
+
+            threads[k] = new Thread(() -> {
+                for (int h = start; h < stop; ++h) {
+                    count.addAndGet(FactorsCounter.countFactors(h));
+                }
+            });
         }
 
         for (Thread worker : threads) {
