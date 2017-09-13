@@ -46,3 +46,34 @@ real    0m3.919s
 user    0m14.927s
 sys     0m0.020s
 ```
+# Exercise 2
+
+## 1
+*Make a thread-safe implementation, class Histogram2, of interface Histogram by adding suitable modifiers
+(final and synchronized) to a copy of the Histogram1 class. Which fields and methods need which
+modifiers? Why? Does the getSpan method need to be synchronized?
+
+Elements of the counts array can be read and incremented and as such a solution would not be to have an immutable class. However the size of the array does not change which means that it would be good to mark the array as "final", this garantees that no code will be able to change the referenced array and the referenced array has a fixed size.
+This "final" thus garantees that its safe to have getSpan be nonsyncronized since its return value never changes af initialization of the class itself.
+Increment and getCount however must be syncronized as they access and overwrite values and thus there must be visibility between threads. 
+
+See SimpleHistogram.java
+
+## 2
+
+See TestCountFactors.java
+
+## 3
+*Can you now remove synchronized from all methods? Why? Run your prime factor counter and check
+that the results are correct.
+
+AtomicInteger garantees visibility and thread-safe atomic execution of get and increments. Therefore since this is no other atomicity needed then the answer is YES you can remove synchronization from all methods.
+
+## 4
+See TestCountFactors.java
+
+## 5
+See TestCountFactors.java
+
+## 6
+See TestCountFactors.java
