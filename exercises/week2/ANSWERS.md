@@ -46,7 +46,7 @@ real    0m3.919s
 user    0m14.927s
 sys     0m0.020s
 ```
-# Exercise 2
+# Exercise 3
 
 ## 1
 *Make a thread-safe implementation, class Histogram2, of interface Histogram by adding suitable modifiers
@@ -77,3 +77,40 @@ See TestCountFactors.java
 
 ## 6
 See TestCountFactors.java
+
+# Exercise 5
+
+## 1
+*Describe what you observe when you run the program.
+The output:
+main
+main finished 40000000
+fresh 0 stops: 22021939
+fresh 1 stops: 22022685
+
+Neither thread 1 or 2 reports that count is anywhere near 40000000 so the observation is that we are way below the expected result.
+
+## 2
+*How can you explain what you observe?
+count is of the type Long which is an immutable object. This means that to allow incrementation, that object must be replaced by a new Long.
+This in turn means that the count variable constantly changes in terms of reference which means that each incrementation will lock on another reference.
+Example case:
+Thread A acquire intrinsic lock on count
+Thread B waits for lock
+Thread A increment and releases lock
+Thread B enters block
+Thread A acquire lock on count with new reference due to last incrementation
+Thread B and A increment at the same time and, reads the same number and writes the same number.
+(Now count is wrong by the offset of 1, no atomicity preserved)
+
+## 3
+* Create a version of the program (changing as little as possible) that works as intended
+To lock on count we need to lock on a shared immutable object reference that does not change. For that I changed the datatype of Long to AtomicLong which is immutable and thus
+I have marked the count field final.
+The output is nowmain
+main finished 40000000
+fresh 0 stops: 39197835
+fresh 1 stops: 40000000
+
+40000000 is the expected result.
+See TestStaticCounter.java
