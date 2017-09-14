@@ -64,6 +64,19 @@ real    0m3.556s
 user    0m13.138s
 sys     0m0.028s
 ```
+
+# Exercise 2.2
+## 1
+*In the VolatileCachingFactorizer class, why is it important that the cache field is declared volatile?
+*why is it important that the cache field is declared volatile?
+Because when cache is changed in getFactors, it is by being assigned a new reference to a newly created OneValueCache.
+Therefore as cache is a shared varable that changes accross threads, it needs to be volatile to garantee visibility as their is no enforced synchronization. 
+
+## 2
+*In the OneValueCache class, why is it important that both fields are declared final?
+To enforce the property that they are immutable. As all variables (state variables) that affects the return value are final, the class is immutable
+because of that and because the array that could be changed by untrusted code does not escape after being cloned.
+
 # Exercise 2.4
 Source file for all tasks:
 **Source file: CachedFactorsCounter.java**
