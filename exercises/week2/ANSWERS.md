@@ -65,11 +65,19 @@ user    0m13.138s
 sys     0m0.028s
 ```
 
-<<<<<<< HEAD
-# Exercise 2
+# Exercise 2.2
 ## 1
+*In the VolatileCachingFactorizer class, why is it important that the cache field is declared volatile?
+*why is it important that the cache field is declared volatile?
+Because when cache is changed in getFactors, it is by being assigned a new reference to a newly created OneValueCache.
+Therefore as cache is a shared varable that changes accross threads, it needs to be volatile to garantee visibility as their is no enforced synchronization. 
 
-# Exercise 3
+## 2
+*In the OneValueCache class, why is it important that both fields are declared final?
+To enforce the property that they are immutable. As all variables (state variables) that affects the return value are final, the class is immutable
+because of that and because the array that could be changed by untrusted code does not escape after being cloned.
+
+# Exercise 2.3
 
 ## 1
 *Make a thread-safe implementation, class Histogram2, of interface Histogram by adding suitable modifiers
@@ -139,19 +147,6 @@ See TestCountFactors.java
 problem as before.
 
 See TestCountFactors.java
-=======
-# Exercise 2.2
-## 1
-*In the VolatileCachingFactorizer class, why is it important that the cache field is declared volatile?
-*why is it important that the cache field is declared volatile?
-Because when cache is changed in getFactors, it is by being assigned a new reference to a newly created OneValueCache.
-Therefore as cache is a shared varable that changes accross threads, it needs to be volatile to garantee visibility as their is no enforced synchronization. 
-
-## 2
-*In the OneValueCache class, why is it important that both fields are declared final?
-To enforce the property that they are immutable. As all variables (state variables) that affects the return value are final, the class is immutable
-because of that and because the array that could be changed by untrusted code does not escape after being cloned.
->>>>>>> a22ea7c6903c9c5fd1696e0bc8a717cb86789d46
 
 # Exercise 2.4
 Source file for all tasks:
