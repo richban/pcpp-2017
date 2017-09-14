@@ -2,6 +2,8 @@
  * Exercise 2.1, question 3
  */
 
+package toHandin;
+
 public class ParallelFactorsCounter {
     public static void main(String[] args) {
         long upperBound = 5_000_000;

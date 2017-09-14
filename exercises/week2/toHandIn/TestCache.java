@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.*;
 import java.util.function.Function;
 
-
 public class TestCache {
   public static void main(String[] args) throws InterruptedException {
     Computable<Long, long[]> factorizer = new Factorizer(),
@@ -41,13 +40,13 @@ public class TestCache {
 
 
 // Interface that represents a function from A to V
-public interface Computable <A, V> {
+interface Computable <A, V> {
   V compute(A arg) throws InterruptedException;
 }
 
 
 // Prime factorization is a function from Long to long[]
-public class Factorizer implements Computable<Long, long[]> {
+class Factorizer implements Computable<Long, long[]> {
   // For statistics only, count number of calls to factorizer:
   private final AtomicLong count = new AtomicLong(0);
   public long getCount() { return count.longValue(); }
@@ -80,13 +79,14 @@ public class Factorizer implements Computable<Long, long[]> {
  * From Goetz p. 103
  * @author Brian Goetz and Tim Peierls
  */
-public class Memoizer1 <A, V> implements Computable<A, V> {
+class Memoizer1 <A, V> implements Computable<A, V> {
   private final Map<A, V> cache = new HashMap<A, V>();
   private final Computable<A, V> c;
   
   public Memoizer1(Computable<A, V> c) { this.c = c; }
 
   public synchronized V compute(A arg) throws InterruptedException {
+      
     V result = cache.get(arg);
     if (result == null) {
       result = c.compute(arg);
@@ -103,7 +103,7 @@ public class Memoizer1 <A, V> implements Computable<A, V> {
  * From Goetz p. 105
  * @author Brian Goetz and Tim Peierls
  */
-public class Memoizer2 <A, V> implements Computable<A, V> {
+class Memoizer2 <A, V> implements Computable<A, V> {
   private final Map<A, V> cache = new ConcurrentHashMap<A, V>();
   private final Computable<A, V> c;
   
@@ -127,7 +127,7 @@ public class Memoizer2 <A, V> implements Computable<A, V> {
  * From Goetz p. 106
  * @author Brian Goetz and Tim Peierls
  */
-public class Memoizer3<A, V> implements Computable<A, V> {
+class Memoizer3<A, V> implements Computable<A, V> {
   private final Map<A, Future<V>> cache 
     = new ConcurrentHashMap<A, Future<V>>();
   private final Computable<A, V> c;
@@ -167,7 +167,7 @@ public class Memoizer3<A, V> implements Computable<A, V> {
  * cache, then run on calling thread.
  */
 
-public class Memoizer4<A, V> implements Computable<A, V> {
+class Memoizer4<A, V> implements Computable<A, V> {
   private final Map<A, Future<V>> cache 
     = new ConcurrentHashMap<A, Future<V>>();
   private final Computable<A, V> c;
@@ -208,7 +208,7 @@ public class Memoizer4<A, V> implements Computable<A, V> {
  * not create Future and put it there, then run on calling thread.
  */
 
-public class Memoizer5<A, V> implements Computable<A, V> {
+class Memoizer5<A, V> implements Computable<A, V> {
   private final Map<A, Future<V>> cache 
     = new ConcurrentHashMap<A, Future<V>>();
   private final Computable<A, V> c;
@@ -250,7 +250,7 @@ public class Memoizer5<A, V> implements Computable<A, V> {
  * From Goetz p. 108
  * @author Brian Goetz and Tim Peierls
  */
-public class Memoizer <A, V> implements Computable<A, V> {
+class Memoizer <A, V> implements Computable<A, V> {
   private final ConcurrentMap<A, Future<V>> cache
     = new ConcurrentHashMap<A, Future<V>>();
   private final Computable<A, V> c;
