@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.*;
 class TestCountFactors {
   public static void main(String[] args) {
     final int range = 5_000_000; 
-	final Histogram5 histogram = new Histogram5(range);
+	final Histogram4 histogram = new Histogram4(range);
 	int threadCount = 10;
 	int part = range / threadCount;
 	Thread[] threadArray = new Thread[threadCount];

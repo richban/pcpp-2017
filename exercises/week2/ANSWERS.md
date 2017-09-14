@@ -53,13 +53,17 @@ sys     0m0.020s
 (final and synchronized) to a copy of the Histogram1 class. Which fields and methods need which
 modifiers? Why? Does the getSpan method need to be synchronized?
 
-Elements of the counts array can be read and incremented and as such a solution would not be to have an immutable class. However the size of the array does not change which means that it would be good to mark the array as "final", this garantees that no code will be able to change the referenced array and the referenced array has a fixed size.
-This "final" thus garantees that its safe to have getSpan be nonsyncronized since its return value never changes af initialization of the class itself.
-Increment and getCount however must be syncronized as they access and overwrite values and thus there must be visibility between threads. 
+Elements of the counts array will be both read and overwritten so increment and and getCount must be synchronized.
+The size of the array does not change which means that it would be good to mark the array as "final" as only resizing the array would change the reference.
+This will never happen in this program.
+This "final" thus garantees that its safe to have getSpan be nonsyncronized since its return value never changes after initialization of the class itself.
+Increment and getCount however must be syncronized as they access and overwrite values and thus there must be visibility for both increment and getCount and atomicity in the case of increment between threads. 
 
 See SimpleHistogram.java
 
 ## 2
+*Now consider again counting the number of prime factors in a number p, as in Exercise 2.3 and file TestCountFactors.java. Use the Histogram2 class to write a parallel program that counts how many numbers
+in the range 0. . . 4 999 999 have 0 prime factors.
 
 See TestCountFactors.java
 
@@ -67,15 +71,50 @@ See TestCountFactors.java
 *Can you now remove synchronized from all methods? Why? Run your prime factor counter and check
 that the results are correct.
 
-AtomicInteger garantees visibility and thread-safe atomic execution of get and increments. Therefore since this is no other atomicity needed then the answer is YES you can remove synchronization from all methods.
+AtomicInteger garantees visibility and thread-safe atomic execution of get and increments. There are the also sort of operations we need.
+Therefore the answer is YES and you can remove synchronization from all methods.
 
 ## 4
+*Define a thread-safe class Histogram4 that uses a java.util.concurrent.atomic.AtomicIntegerArray object to
+hold the counts. Run your prime factor counter and check that the results are correct
+
 See TestCountFactors.java
 
+Output was:
+0 : 2
+1 : 348513
+2 : 979274
+3 : 1232881
+4 : 1015979
+5 : 660254
+6 : 374791
+7 : 197039
+8 : 98949
+9 : 48400
+10 : 23251
+11 : 11019
+12 : 5199
+13 : 2403
+14 : 1124
+15 : 510
+16 : 233
+17 : 102
+18 : 45
+19 : 21
+20 : 7
+21 : 3
+22 : 1
+
 ## 5
+*Now extend the Histogram interface with a method getBins that returns an array of the bin counts:
+public int[] getBins();
+
 See TestCountFactors.java
 
 ## 6
+*Create a Histogram5 class that uses an array of LongAdder objects for the bins, and use it to solve the same
+problem as before.
+
 See TestCountFactors.java
 
 # Exercise 5
