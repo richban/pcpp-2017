@@ -2,8 +2,10 @@
 // Author: Peter Sestoft (sestoft@itu.dk)
 
 import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Consumer;  
-import java.util.function.Function;  
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 class Example154 {
   public static void main(String[] args) {
@@ -173,5 +175,129 @@ class FunList<T> {
     forEach(item -> sb.append(item).append(" "));
     return sb.toString();
   }
+
+  // Exercise 3.1 from here on
+
+  // Recursive implementations
+    protected static <T> Node<T> remove(Node<T> elem, T x) {
+        if (elem == null)
+            return null;
+
+        Node<T> newNext = remove(elem.next, x);
+        if (elem.item == x) {
+            return newNext;
+        }
+
+        if (newNext != elem.next) {
+            return new Node<T>(elem.item, newNext);
+        }
+        return elem;
+    }
+
+    public FunList<T> remove(T x) {
+        Node<T> newFirst = remove(first, x);
+        if (newFirst != first) {
+            return new FunList<T>(newFirst);
+        }
+        return this;
+    }
+
+    public int count(Predicate<T> p) {
+        return reduce(0, (acc, elem) -> {
+                return p.test(elem) ? acc + 1 : acc;
+            }, first);
+    }
+
+    public FunList<T> filter(Predicate<T> p) {
+        return new FunList<T>(reduce(null, (nodes, elem) -> {
+                return p.test(elem)
+                        ? append(nodes, new Node<T>(elem, null))
+                        : nodes;
+            }, first));
+    }
+
+    public FunList<T> removeFun(T x) {
+        return filter((elem) -> { return elem != x; });
+    }
+
+    public static <T> Node<T> flatten(Node<FunList<T>> nodes) {
+        return reduce(null, (acc, subList) -> {
+                return append(acc, subList.first);
+            }, nodes);
+    }
+
+    // No reduce because it's the next task O_O
+    public static <T> FunList<T> flattenFun(FunList<FunList<T>> xs) {
+        return new FunList<T>(flatten(xs.first));
+    }
+
+    // Can finally use reduce here
+    public static <T> FunList<T> flatten(FunList<FunList<T>> xs) {
+        return xs.reduce(new FunList<T>(), (acc, subList) -> {
+                return acc.append(subList);
+            });
+    }
+
+    public static <T, U> FunList<U> flatMap(Node<T> n, Function<T, FunList<U>> f) {
+        if (n == null)
+            return new FunList<U>();
+        return f.apply(n.item).append(flatMap(n.next, f));
+    }
+
+    public <U> FunList<U> flatMap(Function<T, FunList<U>> f) {
+        return flatMap(first, f);
+    }
+
+    public <U> FunList<U> flatMapFun(Function<T, FunList<U>> f) {
+        return flatten(map(f));
+    }
+
+    public FunList<T> scan(BinaryOperator<T> f) {
+        if (first == null) {
+            return null;
+        }
+        FunList<T> accumulator = new FunList<T>().insert(0, first.item);
+        return removeAt(0).reduce(accumulator, (acc, item) -> {
+            return acc.insert(0, f.apply(acc.first.item, item));
+        }).reverse();
+    }
+    
+    public static void main(String[] args) {
+        FunList<Integer> l = new FunList<>();
+        for (int k = 30; k > 0; --k) {
+            l = l.insert(0, k % 5);
+        }
+
+        System.out.println(l);
+        System.out.println(l.remove(3));
+        System.out.println(l.remove(5) == l ? "Same object" : "Different object");
+        System.out.println(l.count((n) -> {return n % 2 == 0;}));
+        System.out.println(l.filter((n) -> {return n % 2 == 0;}));
+        System.out.println(l.removeFun(3));
+
+        FunList<FunList<Integer>> nested = new FunList<>();
+        for (int k = 2; k > 0; --k) {
+            nested = nested.insert(0, l);
+        }
+        
+        System.out.println(flatten(nested));
+        System.out.println(flattenFun(nested));
+
+        final FunList<Integer> fl = l;
+        System.out.println(l.flatMap((item) -> {
+            return new FunList<String>()
+                    .insert(0, "is cool")
+                    .insert(0, "Richard");
+        }));
+        System.out.println(l.flatMapFun((item) -> {
+            return new FunList<String>()
+                    .insert(0, "is the best")
+                    .insert(0, "Patrick");
+        }));
+        System.out.println(l.scan((item0, item1) -> {
+            return item0 + item1;
+        }));
+        
+    }
 }
 
