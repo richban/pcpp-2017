@@ -44,10 +44,6 @@ public class Stream {
   }
 
   // Exercise 3.4.4
-  // DoubleSupplier is an interface. Classes Implemet interfaces. which means
-  // actual implementation of the interface method. Can't intanciiet an interface
-  // Here I am creating Object which implements the DoubleSupplier interface
-  // withoud creating the class.
   public static void sumStream3() {
     DoubleStream doublestream = DoubleStream.generate(new DoubleSupplier() {
       private double number = 1.0;
