@@ -24,8 +24,15 @@ public class parallelOp {
     System.out.println(a[10_000_000]);
   }
 
+  public static void printArray(){
+    for(int i=N/10; i <= N; i++){
+      System.out.println(a[i]);
+    }
+  }
+
   public static void main(String[] args) {
     setAll();
     sumAll();
+    printArray();
   }
 }
