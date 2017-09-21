@@ -25,8 +25,8 @@ public class parallelOp {
   }
 
   public static void printArray(){
-    for(int i=N/10; i <= N; i++){
-      System.out.println(a[i]);
+    for(int i=N/10; i <= N; i += (N-N/10) / 9){
+      System.out.println(a[i] / (i / Math.log(i)));
     }
   }
 
