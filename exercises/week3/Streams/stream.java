@@ -15,7 +15,7 @@ public class Stream {
     double sum = makeNewStream().sum();
     Long end = System.currentTimeMillis();
 
-    System.out.printf("Sum = %20.16f%n" + " and it took : "
+    System.out.printf("Sum1 = %20.16f%n" + " and it took : "
                       + (end - start) + " ms\n", sum);
   }
 
@@ -61,14 +61,14 @@ public class Stream {
   public static void sumStream4() {
     DoubleStream doublestream = DoubleStream.generate(new DoubleSupplier() {
       private double number = 1.0;
-      public double getAsDouble() { return 1.0 / number++; }
+      public synchronized double getAsDouble() { return 1.0 / number++; }
     })
                               .limit(N);
     Long start4 = System.currentTimeMillis();
     double sum4 = doublestream.parallel().sum();
     Long end4 = System.currentTimeMillis();
 
-    System.out.printf("Sum4 = %20.16f%n" + " and it took : "
+    System.out.printf("Sum5 = %20.16f%n" + " and it took : "
                       + (end4 - start4) + " ms with parallel\n", sum4);
   }
 
