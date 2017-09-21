@@ -256,8 +256,8 @@ class FunList<T> {
         if (first == null) {
             return null;
         }
-        FunList<T> accumulator = new FunList<T>().insert(0, first.item);
-        return removeAt(0).reduce(accumulator, (acc, item) -> {
+        FunList<T> identity = new FunList<T>().insert(0, first.item);
+        return removeAt(0).reduce(identity, (acc, item) -> {
             return acc.insert(0, f.apply(acc.first.item, item));
         }).reverse();
     }

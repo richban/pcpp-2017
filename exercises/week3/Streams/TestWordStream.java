@@ -17,6 +17,7 @@ import java.util.Optional;
 public class TestWordStream {
   public static void main(String[] args) {
     String filename = "usr/share/dict/words";
+	//3.3 - 1: Pipeline that prints 100 words.
     System.out.println(readWords(filename).count());
 	//3.3 - 2: Pipeline that prints 100 words.
 	System.out.println("#Exercise 3.3 - 2");
@@ -64,7 +65,7 @@ public class TestWordStream {
 	
 	//3.3 - 12: make parralel version of 11.
 	System.out.println("#Exercise 3.3 - 12"); 
-	//readWords(filename).parallel().collect(Collectors.groupingBy(l -> letters(l),Collectors.mapping(item->item, Collectors.toList()))).forEach((id,words)-> { if (words.size() > 1) System.out.println(words); });
+	readWords(filename).parallel().collect(Collectors.groupingBy(l -> letters(l),Collectors.mapping(item->item, Collectors.toList()))).forEach((id,words)-> { if (words.size() > 1) System.out.println(words); });
 	
 	//3.3 - 13: use groupingByConcurrent.
 	System.out.println("#Exercise 3.3 - 13"); 
