@@ -1,43 +1,86 @@
 import java.util.stream.*;
+import java.util.function.*;
+import java.util.*;
 
 public class Stream {
   static final int N = 999_999_999;
-  static double[] a = new double[N];
 
-  public static void sumStream() {
+  private static DoubleStream makeNewStream() {
+    return IntStream.range(1, N)
+                          .mapToDouble(n -> 1.0 / n);
+  }
+  // Exercise 3.4.1
+  public static void sumStream1() {
     Long start = System.currentTimeMillis();
-    double sum = IntStream.range(1, N)
-                          .mapToDouble(n -> 1.0 / n)
-                          .sum();
+    double sum = makeNewStream().sum();
     Long end = System.currentTimeMillis();
 
-    Long start2 = System.currentTimeMillis();
-    double sum2 = IntStream.range(1, N)
-                          .mapToDouble(n -> 1.0 / n)
-                          .sum();
-    Long end2 = System.currentTimeMillis();
-
     System.out.printf("Sum = %20.16f%n" + " and it took : "
-                      + (end - start) + "ms", sum);
-
-    System.out.printf("Sum2 = %20.16f%n" + " and it took : "
-                      + (end2 - start2) + "ms with parallel", sum2);
+                      + (end - start) + " ms\n", sum);
   }
 
+  // Exercise 3.4.2
+  public static void sumStream2() {
+    Long start = System.currentTimeMillis();
+    double sum = makeNewStream().parallel().sum();
+    Long end = System.currentTimeMillis();
+
+    System.out.printf("Sum2 = %20.16f%n" + " and it took : "
+                      + (end - start) + " ms with parallel\n", sum);
+  }
+
+  // Exercise 3.4.3
   public static void sumStandArray() {
     double sum3 = 0;
     Long start3 = System.currentTimeMillis();
-    for(int i = 0; i < a.length; i++){
-      a[i] = 1.0 / i;
-      sum3 += a[i];
+    PrimitiveIterator.OfDouble iterator = makeNewStream().iterator();
+    while(iterator.hasNext()){
+      sum3 += iterator.nextDouble();
     }
     Long end3 = System.currentTimeMillis();
 
     System.out.printf("Sum3 = %20.16f%n" + " and it took : "
-                      + (end3 - start3) + "ms with for-loop", sum3);
+                      + (end3 - start3) + " ms with for-loop\n", sum3);
   }
+
+  // Exercise 3.4.4
+  // DoubleSupplier is an interface. Classes Implemet interfaces. which means
+  // actual implementation of the interface method. Can't intanciiet an interface
+  // Here I am creating Object which implements the DoubleSupplier interface
+  // withoud creating the class.
+  public static void sumStream3() {
+    DoubleStream doublestream = DoubleStream.generate(new DoubleSupplier() {
+      private double number = 1.0;
+      public double getAsDouble() { return 1.0 / number++; }
+    })
+                              .limit(N);
+    Long start4 = System.currentTimeMillis();
+    double sum4 = doublestream.sum();
+    Long end4 = System.currentTimeMillis();
+
+    System.out.printf("Sum4 = %20.16f%n" + " and it took : "
+                      + (end4 - start4) + " ms with parallel\n", sum4);
+  }
+
+  public static void sumStream4() {
+    DoubleStream doublestream = DoubleStream.generate(new DoubleSupplier() {
+      private double number = 1.0;
+      public double getAsDouble() { return 1.0 / number++; }
+    })
+                              .limit(N);
+    Long start4 = System.currentTimeMillis();
+    double sum4 = doublestream.parallel().sum();
+    Long end4 = System.currentTimeMillis();
+
+    System.out.printf("Sum4 = %20.16f%n" + " and it took : "
+                      + (end4 - start4) + " ms with parallel\n", sum4);
+  }
+
   public static void main(String[] args) {
-    sumStream();
+    sumStream1();
+    sumStream2();
+    sumStream3();
     sumStandArray();
+    sumStream4();
   }
 }
