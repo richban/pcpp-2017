@@ -36,7 +36,7 @@ In the fists test the overhead of the extra object in the method arguments is
 still significant, because the cache is not boosting the performances. As the
 number of iterations grows the impact of such overhead decreases, up to the point
 that we reach the same performances as `mark5()`, although with a greater number
-of iteration. 
+of iteration.
 
 ```
 # OS:   Mac OS X; 10.12.6; x86_64
@@ -110,4 +110,28 @@ multiply                             31.1 ns       1.82    1048576
 multiply                             30.9 ns       1.57    2097152
 multiply                             31.2 ns       0.88    4194304
 multiply                             30.7 ns       0.74    8388608
+```
+
+## 4.2
+
+###### Mark7
+After a certain iterations we can assume that the optimazations performed by
+JIT doesn't increase and does not produce new machine code which is eventually
+cached and therefore the runtime eventually stabilize. However these results are
+influenced by other external processes.
+
+```
+# OS:   Mac OS X; 10.12.6; x86_64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 8 "cores"
+# Date: 2017-09-28T19:15:44+0200
+pow                                  76.7 ns       0.87    4194304
+exp                                  55.1 ns       0.56    8388608
+log                                  25.3 ns       0.37   16777216
+sin                                 121.7 ns       1.85    2097152
+cos                                 121.4 ns       1.30    2097152
+tan                                 158.9 ns       5.70    2097152
+asin                                228.4 ns       2.11    2097152
+acos                                212.6 ns       2.20    2097152
+atan                                 52.0 ns       0.50    8388608
 ```
