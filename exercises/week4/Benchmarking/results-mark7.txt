@@ -1,0 +1,12 @@
+# OS:   Mac OS X; 10.12.6; x86_64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 8 "cores"
+# Date: 2017-09-28T20:26:07+0200
+hashCode()                            2.7 ns       0.04  134217728
+Point creation                       74.6 ns       1.13    4194304
+Thread's work                      5765.2 ns      83.96      65536
+Thread create                       883.5 ns       5.72     524288
+Thread create start               38290.5 ns     132.28       8192
+Thread create start join          52887.8 ns     584.81       8192
+ai value = 1638340000
+Uncontended lock                      5.5 ns       0.06   67108864
