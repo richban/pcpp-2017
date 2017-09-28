@@ -34,7 +34,11 @@ when they exist?
 
 See See BenchmarkExcel2.png
 The performance of AtomicLong is worse than LongCounter. That said it is interesting that AtomicLong becomes most efficient
-when dealing with around 11 threads.
+when dealing with around 11 threads. Basically AtomicLong has a stable performance with rising number of threads, one could say
+that this is an example of what to expect from adequate built-in classes and methods. They are typically designed to be efficient in
+many context, but implementing your own solution for the particular context that you need it can provide significiant performance boost.
+We see that LongCounter is more efficient if we learn to control the number of threads that will be needed depending on the hardware. 
+AtomicLong however gradually begin to maintain a particular performance.
 
 ## 5: Now change the worker thread code in the lambda expression to work like a very performance-conscious
 developer might have written it. Instead of calling lc.increment() on a shared thread-safe variable
