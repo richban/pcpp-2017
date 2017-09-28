@@ -1,0 +1,164 @@
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T18:51:12+0200
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T18:51:24+0200
+Memoizer0                      22248639.4 ns  495029.17         16
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T18:51:48+0200
+Memoizer1                      56028736.9 ns 1270861.63          8
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T18:52:22+0200
+Memoizer2                      12206940.3 ns  805258.19         32
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T18:52:51+0200
+Memoizer3                      13442019.3 ns  919974.19         32
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T18:53:16+0200
+Memoizer4                      13434034.4 ns 1069905.90         32
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T18:53:40+0200
+Memoizer5                      25209457.2 ns  551591.10         16
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T18:55:04+0200
+Memoizer0                      23245455.0 ns  528122.73         16
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T18:55:29+0200
+Memoizer1                      56478651.9 ns 1810874.79          8
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T18:56:03+0200
+Memoizer2                      12305846.8 ns  738427.42         32
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T18:56:32+0200
+Memoizer3                      13575847.9 ns  724534.16         32
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T18:56:56+0200
+Memoizer4                      13697237.5 ns  856626.51         32
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T18:57:21+0200
+Memoizer5                      24489565.8 ns  346467.73         16
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T19:37:31+0200
+Memoizer0                      51307579.7 ns 1379006.14          8
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T19:38:21+0200
+Memoizer1                    3351062362.9 ns 10171040222.45          2
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T19:39:28+0200
+Memoizer2                      19131194.0 ns  839181.54         16
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T19:40:25+0200
+Memoizer3                      34332481.3 ns  865394.11          8
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T19:41:10+0200
+Memoizer4                      31062057.4 ns  521624.89         16
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T19:41:58+0200
+Memoizer5                      54043253.1 ns 1180798.21          8
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T20:09:19+0200
+Memoizer2                      21461825.1 ns  641925.33         16
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T20:10:28+0200
+Memoizer4                      27240792.9 ns  298809.76         16
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T21:46:13+0200
+Memoizer0                       9613157.7 ns  332353.43         32
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T21:46:25+0200
+Memoizer1                      21331348.8 ns  522488.54         16
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T21:46:40+0200
+Memoizer2                       5114734.3 ns  104180.79         64
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T21:46:52+0200
+Memoizer3                      12229138.8 ns  781799.24         32
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T21:47:10+0200
+Memoizer4                      12131641.8 ns  697298.31         32
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T21:47:32+0200
+Memoizer5                      22507712.1 ns  591007.49         16
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T21:49:39+0200
+Memoizer2                       3868001.7 ns   69146.13        128
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T21:49:55+0200
+Memoizer3                       5991459.6 ns   83791.68         64
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T21:50:08+0200
+Memoizer4                       8730496.5 ns  617382.85         32
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T21:50:35+0200
+Memoizer4                      10322913.0 ns  615892.56         32
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T21:50:53+0200
+Memoizer3                      11452391.6 ns  879230.18         32
+# OS:   Linux; 4.12.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-09-28T21:51:12+0200
+Memoizer2                      10027877.1 ns  855573.50         32
