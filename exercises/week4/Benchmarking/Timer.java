@@ -1,5 +1,5 @@
 // Crude wall clock timing utility, measuring time in seconds
-   
+
 public class Timer {
   private long start, spent = 0;
   public Timer() { play(); }
