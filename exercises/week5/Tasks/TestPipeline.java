@@ -20,6 +20,8 @@ import java.net.URL;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.*;
 
 // For regular expressions
 import java.util.regex.Matcher;
@@ -28,18 +30,38 @@ import java.util.regex.Pattern;
 
 public class TestPipeline {
   public static void main(String[] args) {
-    runAsThreads();
+    runAsTasks();
   }
 
   private static void runAsThreads() {
     final BlockingQueue<String> urls = new OneItemQueue<String>();
-    final BlockingQueue<Webpage> pages = new OneItemQueue<Webpage>();
+    final BlockingQueue<Webpage> pages = new OneItemQueue<Webpage>(); 
     final BlockingQueue<Link> refPairs = new OneItemQueue<Link>();
+    final BlockingQueue<Link> uniqueRefPairs = new OneItemQueue<Link>();
     Thread t1 = new Thread(new UrlProducer(urls));
     Thread t2 = new Thread(new PageGetter(urls, pages));
     Thread t3 = new Thread(new LinkScanner(pages, refPairs));
-    Thread t4 = new Thread(new LinkPrinter(refPairs));
-    t1.start(); t2.start(); t3.start(); t4.start(); 
+    Thread t4 = new Thread(new LinkPrinter(uniqueRefPairs));
+    Thread t5 = new Thread(new Uniquifier(refPairs,uniqueRefPairs));
+    t1.start(); t2.start(); t3.start(); t4.start(); t5.start();
+  }
+  
+  private static void runAsTasks() {
+	ExecutorService executor = Executors.newWorkStealingPool();
+    final BlockingQueue<String> urls = new OneItemQueue<String>();
+    final BlockingQueue<Webpage> pages = new OneItemQueue<Webpage>(); 
+    final BlockingQueue<Link> refPairs = new OneItemQueue<Link>();
+    final BlockingQueue<Link> uniqueRefPairs = new OneItemQueue<Link>();
+    Future<?> t1 = executor.submit(new UrlProducer(urls));
+    Future<?> t2 = executor.submit(new PageGetter(urls, pages));
+    Future<?> t3 = executor.submit(new LinkScanner(pages, refPairs));
+    Future<?> t4 = executor.submit(new LinkPrinter(uniqueRefPairs));
+    Future<?> t5 = executor.submit(new Uniquifier(refPairs,uniqueRefPairs));
+	try {
+	t1.get(); t2.get(); t3.get(); t4.get(); t5.get();
+	} catch (Exception ex) {
+		System.out.println(ex);
+	}
   }
 }
 
@@ -207,6 +229,29 @@ class OneItemQueue<T> implements BlockingQueue<T> {
       full = false;
       this.notifyAll();
       return item;
+    }
+  }
+}
+
+class Uniquifier<T> implements Runnable {
+ private final HashSet<T> visitedItems;
+ private final BlockingQueue<T> input;
+ private final BlockingQueue<T> output;
+
+  public Uniquifier(BlockingQueue<T> input, 
+                     BlockingQueue<T> output) {
+    this.input = input;
+    this.output = output;
+	this.visitedItems = new HashSet<T>();
+  }
+
+  public void run() { 
+    while (true) {
+      T item = input.take();
+	  if (visitedItems.contains(item))
+		  continue;
+	  visitedItems.add(item);
+      output.put(item);
     }
   }
 }
