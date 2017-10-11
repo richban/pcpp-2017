@@ -47,18 +47,19 @@ public class TestPipeline {
   }
   
   private static void runAsTasks() {
-	ExecutorService executor = Executors.newWorkStealingPool();
+	ExecutorService executor = Executors.newFixedThreadPool(6);
     final BlockingQueue<String> urls = new OneItemQueue<String>();
     final BlockingQueue<Webpage> pages = new OneItemQueue<Webpage>(); 
     final BlockingQueue<Link> refPairs = new OneItemQueue<Link>();
     final BlockingQueue<Link> uniqueRefPairs = new OneItemQueue<Link>();
     Future<?> t1 = executor.submit(new UrlProducer(urls));
     Future<?> t2 = executor.submit(new PageGetter(urls, pages));
+    Future<?> t6 = executor.submit(new PageGetter(urls, pages));
     Future<?> t3 = executor.submit(new LinkScanner(pages, refPairs));
     Future<?> t4 = executor.submit(new LinkPrinter(uniqueRefPairs));
-    Future<?> t5 = executor.submit(new Uniquifier(refPairs,uniqueRefPairs));
+    Future<?> t5 = executor.submit(new Uniquifier(refPairs,uniqueRefPairs)); 
 	try {
-	t1.get(); t2.get(); t3.get(); t4.get(); t5.get();
+	t1.get(); t2.get(); t3.get(); t4.get(); t5.get(); t6.get();
 	} catch (Exception ex) {
 		System.out.println(ex);
 	}
@@ -157,7 +158,7 @@ class LinkPrinter implements Runnable {
   }
 
   public void run() { 
-    while (true) {
+    while (true) { 
       Link link = input.take();
       //      System.out.println("LinkPrinter: " + link.from);
       System.out.printf("%s links to %s%n", link.from, link.to);

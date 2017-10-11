@@ -62,3 +62,19 @@ Pages took 1987773504 ns to load
 Pages took 1813257937 ns to load
 Pages took 1879440503 ns to load
 ```
+# Exercise 5.4
+
+## Task 3 : The results should be the same as when using threads. Are they?
+
+My hardware has four processors and WorkStealingPool creates an amount of threads in accordance with how many processors I have. Thus WorkStealingPool will have four threads to utilize
+to execute tasks. The WorkStealingPool is based on the work stealing algorithm where work can be stolen from the queues of other threads. The only time a thread will work on a new task is
+when it has completed the one it is currently working on. Now, the problem is that I have five tasks that all blocks the thread hence only four tasks will ever run and therefore I get no
+output as Uniquifier is never scheduled to run (it is the fifth task to be scheduled for execution), thus LinkPrinter never receive any input.
+
+## Task 5 : What so you observe? Can you explain why?
+The same as with task 3, there is no output. The reason is that FixedThreadPool creates a fixed number of threads. When a task is submitted it will be queued and a task will be executed in
+a thread when one is available. There are five tasks that all blocks, but a fixed number of threads so a task will be queued forever without being executed.
+
+## Task 6 : You should get the same results as before, though possibly in a different order. Do you? Why?
+
+There is no atomicity in which one of two PageGetter tasks is garanteed to get an item and write the output before another task. This amounts to many different possibilites for the ordering of the output.
