@@ -16,6 +16,11 @@ times and report the numbers.*
 
 Results:
 ```
+# OS:   Linux; 4.12.0-2-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-10-11T14:46:26+0200
+
 Pages took 4660739050 ns to load
 Pages took 3971414786 ns to load
 Pages took 3871589843 ns to load
@@ -46,6 +51,11 @@ waiting for a network operation to complete (as a side note, this is the main id
 behind the Node.js runtime). This also explains why the running time is not
 proportional to the number of tasks: in fact, the actualy concurrency happens on external computing units, whose number is not influenced by that of threads running on the executing machine. In other words, the most significant running time component of this kind programs is IO waiting time, which is, again, not influenced by the number of threads on the computing machine. Following, the timing results:
 ```
+# OS:   Linux; 4.12.0-2-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 4 "cores"
+# Date: 2017-10-11T14:46:26+0200
+
 Pages took 2060970497 ns to load
 Pages took 1905681240 ns to load
 Pages took 1987773504 ns to load
