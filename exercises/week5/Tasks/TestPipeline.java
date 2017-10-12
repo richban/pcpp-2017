@@ -42,27 +42,47 @@ public class TestPipeline {
     Thread t2 = new Thread(new PageGetter(urls, pages));
     Thread t3 = new Thread(new LinkScanner(pages, refPairs));
     Thread t4 = new Thread(new LinkPrinter(uniqueRefPairs));
-    Thread t5 = new Thread(new Uniquifier(refPairs,uniqueRefPairs));
+    Thread t5 = new Thread(new Uniquifier<Link>(refPairs,uniqueRefPairs));
     t1.start(); t2.start(); t3.start(); t4.start(); t5.start();
   }
   
-  private static void runAsTasks() {
-	ExecutorService executor = Executors.newFixedThreadPool(6);
-    final BlockingQueue<String> urls = new OneItemQueue<String>();
-    final BlockingQueue<Webpage> pages = new OneItemQueue<Webpage>(); 
-    final BlockingQueue<Link> refPairs = new OneItemQueue<Link>();
-    final BlockingQueue<Link> uniqueRefPairs = new OneItemQueue<Link>();
-    Future<?> t1 = executor.submit(new UrlProducer(urls));
-    Future<?> t2 = executor.submit(new PageGetter(urls, pages));
-    Future<?> t6 = executor.submit(new PageGetter(urls, pages));
-    Future<?> t3 = executor.submit(new LinkScanner(pages, refPairs));
-    Future<?> t4 = executor.submit(new LinkPrinter(uniqueRefPairs));
-    Future<?> t5 = executor.submit(new Uniquifier(refPairs,uniqueRefPairs)); 
-	try {
-	t1.get(); t2.get(); t3.get(); t4.get(); t5.get(); t6.get();
-	} catch (Exception ex) {
-		System.out.println(ex);
-	}
+    private static void runAsTasks() {
+        final BlockingQueue<String> urls = new OneItemQueue<String>();
+        final BlockingQueue<Webpage> pages = new OneItemQueue<Webpage>(); 
+        final BlockingQueue<Link> uniqueRefPairs = new OneItemQueue<Link>();
+        final BlockingQueue<Link> refPairs = new OneItemQueue<Link>();
+        
+        Runnable[] tasks = new Runnable[] {
+                new UrlProducer(urls),
+                new PageGetter(urls, pages),
+                new PageGetter(urls, pages),
+                new LinkScanner(pages, refPairs),
+                new Uniquifier<Link>(refPairs, uniqueRefPairs),
+                new LinkPrinter(uniqueRefPairs)
+        };
+
+        int threadsCount = Math.max(tasks.length,
+                Runtime.getRuntime().availableProcessors());
+        ExecutorService executor = Executors.newWorkStealingPool(threadsCount);
+
+        ArrayList<Future<?>> futures = new ArrayList<>(tasks.length);
+        for (Runnable task : tasks) {
+            futures.add(executor.submit(task));
+        }
+
+        try {
+            for (Future<?> f : futures) {
+                f.get();
+            }
+        }
+        catch (InterruptedException e) {
+            System.err.println("A task was interrupted in runAsTasks()");
+        }
+        catch (ExecutionException e) {
+            System.err.println("A task had errors executing in runAsTasks()");
+        }
+
+        executor.shutdownNow();
   }
 }
 
@@ -243,15 +263,15 @@ class Uniquifier<T> implements Runnable {
                      BlockingQueue<T> output) {
     this.input = input;
     this.output = output;
-	this.visitedItems = new HashSet<T>();
+    this.visitedItems = new HashSet<T>();
   }
 
   public void run() { 
     while (true) {
       T item = input.take();
-	  if (visitedItems.contains(item))
-		  continue;
-	  visitedItems.add(item);
+      if (visitedItems.contains(item))
+          continue;
+      visitedItems.add(item);
       output.put(item);
     }
   }
