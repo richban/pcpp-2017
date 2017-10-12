@@ -3,6 +3,19 @@ Group: 23
 *Name 2: Davide Laezza (dlae@itu.dk)
 *Name 3: Richard Banyi (riba@itu.dk)
 
+# Exercise 5.1
+
+* OS:   Mac OS X; 10.12.6; x86_64
+* JVM:  Oracle Corporation; 1.8.0_144
+* CPU:  null; 8 "cores"
+* Date: 2017-10-12T18:40:34+0200
+
+### Task
+
+* py/Executors.newCachedThreadPool.html
+* py/Executors.newWorkStealingPool.html
+
+
 # Exercise 5.3
 
 ## Task 2

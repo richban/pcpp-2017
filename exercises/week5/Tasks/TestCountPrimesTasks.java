@@ -19,10 +19,10 @@ import java.util.function.IntToDoubleFunction;
 
 
 public class TestCountPrimesTasks {
-  private static final ExecutorService executor 
-    = Executors.newWorkStealingPool();
-  //  = Executors.newCachedThreadPool();
-  
+  private static final ExecutorService executor
+      = Executors.newCachedThreadPool();
+      // = Executors.newWorkStealingPool();
+     
   public static void main(String[] args) {
     SystemInfo();
     final int range = 100_000;
@@ -205,6 +205,16 @@ public class TestCountPrimesTasks {
     System.out.printf("# Date: %s%n", 
       new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(now));
   }
+}
+
+// Crude wall clock timing utility, measuring time in seconds
+
+ class Timer {
+  private long start, spent = 0;
+  public Timer() { play(); }
+  public double check() { return (System.nanoTime()-start+spent)/1e9; }
+  public void pause() { spent += System.nanoTime()-start; }
+  public void play() { start = System.nanoTime(); }
 }
 
 class LongCounter {
