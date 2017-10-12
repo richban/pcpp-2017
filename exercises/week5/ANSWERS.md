@@ -7,8 +7,18 @@
 
 ### Task
 
-* py/Executors.newCachedThreadPool.html
-* py/Executors.newWorkStealingPool.html
+* Source: Executors.newCachedThreadPool.html
+* Source: Executors.newWorkStealingPool.html
+
+We got more consistent and plausible results. We have witnessed much better
+performance than from last week using explicit threads.
+For both executors *newCachedThreadPool* and *newWorkStealingPool*
+the results were similiar, however we got better results using
+*newcachedthreadpool* executor, with multiple Runnable tasks we got
+more consistent results. On the other hand with multiple Callable<Long> task
+the results fluctuated. The best results we obtained when we used the atomic.LongAdder.
+
+* Source: LongAdderExecutors.newCachedThreadPool.html
 
 # Exercise 5.3
 
