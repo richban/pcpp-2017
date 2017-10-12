@@ -97,3 +97,23 @@ Do you? Why?*
 
 The order is different because the faster PageGetter pushes its WebPage in the
 queue first, regardeless of the order they were emitted by the URLProducer.
+
+### Task 7
+*Explain why your bounded blocking queue works and why it is thread-safe.*
+
+The internal queue implementation uses two indexes: `head` is used when pushing
+elements, and since it marks the last occupied position, is to be circularly
+incremented before a new item is inserted; `last` is used when popping elements,
+and it is circluarly incremented after the element is inserted, because it points
+to the first free position. In order to differentiate an empty queue from a full
+one, empty elements are marked with a null value, which has the additional benefit
+of clearing unused reference to objects.
+Concurrency wise, the two accessor methods are `syncornized`, due to every
+operation inside them needing either atomicity or lock acquisition. As the code
+spells, in `put()` a thread waits until the queue is no longer full, while in
+`take()` a thread is blocked until the queue is not empty anymore. At the end of
+both methods `notifyAll()` is called, so as to unblock waiting threads, and
+possibly allowing them to complete the method execution. `while` constructs are
+used to check waiting conditions in order to face spurious wake-up and due to the
+usage of `notifyAll()`. `notify()` could have been used as well, but it would have
+required two separate objects used as condition variables.

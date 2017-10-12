@@ -30,7 +30,9 @@ import java.util.regex.Pattern;
 
 public class TestPipeline {
   public static void main(String[] args) {
-    runAsTasks();
+    // runAsThreads();
+    // runAsTasks();
+    runAsTasksWithBoundedQueue();
   }
 
   private static void runAsThreads() {
@@ -83,7 +85,47 @@ public class TestPipeline {
         }
 
         executor.shutdownNow();
-  }
+    }
+
+    private static void runAsTasksWithBoundedQueue() {
+        int N = 10;
+        final BlockingQueue<String> urls = new BoundedQueue<String>(N);
+        final BlockingQueue<Webpage> pages = new BoundedQueue<Webpage>(N); 
+        final BlockingQueue<Link> uniqueRefPairs = new BoundedQueue<Link>(N);
+        final BlockingQueue<Link> refPairs = new BoundedQueue<Link>(N);
+        
+        Runnable[] tasks = new Runnable[] {
+                new UrlProducer(urls),
+                new PageGetter(urls, pages),
+                // new PageGetter(urls, pages),
+                new LinkScanner(pages, refPairs),
+                new Uniquifier<Link>(refPairs, uniqueRefPairs),
+                new LinkPrinter(uniqueRefPairs)
+        };
+
+        int threadsCount = Math.max(tasks.length,
+                Runtime.getRuntime().availableProcessors());
+        ExecutorService executor = Executors.newWorkStealingPool(threadsCount);
+
+        ArrayList<Future<?>> futures = new ArrayList<>(tasks.length);
+        for (Runnable task : tasks) {
+            futures.add(executor.submit(task));
+        }
+
+        try {
+            for (Future<?> f : futures) {
+                f.get();
+            }
+        }
+        catch (InterruptedException e) {
+            System.err.println("A task was interrupted in runAsTasks()");
+        }
+        catch (ExecutionException e) {
+            System.err.println("A task had errors executing in runAsTasks()");
+        }
+
+        executor.shutdownNow();
+    }
 }
 
 class UrlProducer implements Runnable {
@@ -166,6 +208,29 @@ class LinkScanner implements Runnable {
         String link = urlMatcher.group(1);
         output.put(new Link(page.url, link));
       }
+    }
+  }
+}
+
+class Uniquifier<T> implements Runnable {
+ private final HashSet<T> visitedItems;
+ private final BlockingQueue<T> input;
+ private final BlockingQueue<T> output;
+
+  public Uniquifier(BlockingQueue<T> input, 
+                     BlockingQueue<T> output) {
+    this.input = input;
+    this.output = output;
+    this.visitedItems = new HashSet<T>();
+  }
+
+  public void run() { 
+    while (true) {
+      T item = input.take();
+      if (visitedItems.contains(item))
+          continue;
+      visitedItems.add(item);
+      output.put(item);
     }
   }
 }
@@ -254,25 +319,64 @@ class OneItemQueue<T> implements BlockingQueue<T> {
   }
 }
 
-class Uniquifier<T> implements Runnable {
- private final HashSet<T> visitedItems;
- private final BlockingQueue<T> input;
- private final BlockingQueue<T> output;
+class BoundedQueue<T> implements BlockingQueue<T> {
+    private ArrayList<T> queue;
+    private int size, head, last;
 
-  public Uniquifier(BlockingQueue<T> input, 
-                     BlockingQueue<T> output) {
-    this.input = input;
-    this.output = output;
-    this.visitedItems = new HashSet<T>();
-  }
-
-  public void run() { 
-    while (true) {
-      T item = input.take();
-      if (visitedItems.contains(item))
-          continue;
-      visitedItems.add(item);
-      output.put(item);
+    private int circularInc(int n) {
+        return (n + 1) % size;
     }
-  }
+
+    private boolean isFull() {
+        return queue.get(head) != null
+                && circularInc(head) == last;
+    }
+
+    private boolean isEmpty() {
+        return queue.get(head) == null
+                && circularInc(head) == last;
+    }
+
+    public BoundedQueue(int n) {
+        queue = new ArrayList<T>(n);
+        size = n;
+        head = n - 1;
+
+        // Java is such a nice language -_-"
+        for(; n > 0; --n) {
+            queue.add(null);
+        }
+    }
+
+    public synchronized void put(T item) {
+        while(isFull()) {
+            try {
+                wait();
+            }
+            catch (InterruptedException e) {
+                System.err.println("A thread was interrupted in BoundedQueue.take()");
+            }
+        }
+
+        head = circularInc(head);
+        queue.set(head, item);
+        notifyAll();
+    }
+
+    public synchronized T take() {
+        while(isEmpty()) {
+            try {
+                wait();
+            }
+            catch (InterruptedException e) {
+                System.err.println("A thread was interrupted in BoundedQueue.take()");
+            }
+        }
+
+        T item = queue.get(last);
+        queue.set(last, null);
+        last = circularInc(last);
+        notifyAll();
+        return item;
+    }
 }
