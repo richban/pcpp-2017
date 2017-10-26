@@ -369,6 +369,11 @@ class SynchronizedMap<K,V> implements OurMap<K,V>  {
         node = node.next;
       return node;
     }
+    public static <K,V> ItemNode<K,V> delete(ItemNode<K,V> node, K k) {
+      while (node != null && !k.equals(node.k))
+        node = node.next;
+      return node;
+    }
   }
 }
 
@@ -429,12 +434,21 @@ class StripedMap<K,V> implements OurMap<K,V> {
   // Return value v associated with key k, or null
   public V get(K k) {
     // TO DO: IMPLEMENT
-    return null;
+	  final int h = getHash(k), stripe = h % lockCount;
+    synchronized (locks[stripe]) {
+      final int hash = h % buckets.length;
+      return ItemNode.search(buckets[hash], k).v;
+    }
   }
 
   public int size() {
     // TO DO: IMPLEMENT
-    return 0;
+	int count = 0;
+    for (int i = 0; i < lockCount; i++) 
+		synchronized (locks[i]) {
+			count+= sizes[i]; 
+		}
+	return count;
   }
 
   // Put v at key k, or update if already present 
@@ -458,13 +472,45 @@ class StripedMap<K,V> implements OurMap<K,V> {
   // Put v at key k only if absent
   public V putIfAbsent(K k, V v) {
     // TO DO: IMPLEMENT
-    return null;
+    final int h = getHash(k), stripe = h % lockCount;
+    synchronized (locks[stripe]) {
+      final int hash = h % buckets.length;
+      final ItemNode<K,V> node = ItemNode.search(buckets[hash], k);
+      if (node == null) {
+        buckets[hash] = new ItemNode<K,V>(k, v, buckets[hash]);
+        sizes[stripe]++;
+        return null;
+      }
+	  else
+	  {
+		  return node.v;
+	  }
+    }
   }
 
   // Remove and return the value at key k if any, else return null
   public V remove(K k) {
     // TO DO: IMPLEMENT
-    return null;
+    final int h = getHash(k), stripe = h % lockCount;
+    synchronized (locks[stripe]) {
+      final int hash = h % buckets.length;
+      final ItemNode<K,V> node = ItemNode.search(buckets[hash], k);
+      if (node == null) {
+        return null;
+      } 
+	  else
+	  {
+		  Holder<ItemNode<K,V>> oldNode = new Holder<ItemNode<K,V>>();
+		  ItemNode<K,V> nodeResult = ItemNode.delete(buckets[hash], k,oldNode);
+		  if (oldNode.get() == null)
+			  return null;
+		  
+		  buckets[hash] = nodeResult;
+		  sizes[stripe]--;		  
+		  
+		  return oldNode.get().v;
+	  }
+    }
   }
 
   // Iterate over the hashmap's entries one stripe at a time;
@@ -475,6 +521,22 @@ class StripedMap<K,V> implements OurMap<K,V> {
   // same stripe.
   public void forEach(Consumer<K,V> consumer) {
     // TO DO: IMPLEMENT
+	ItemNode<K,V>[] bs = buckets;
+	int stripeSize = bs.length / lockCount;
+	for (int i = 0; i < lockCount; i++)
+	{ 
+		synchronized (locks[i]) {
+			for (int s = i; s < bs.length; s+= lockCount)
+			{
+				ItemNode<K,V> bucket = bs[s]; 
+				while (bucket != null)
+				{
+					consumer.accept(bucket.k,bucket.v);
+					bucket = bucket.next;
+				}
+			}
+		}
+	}
   }
 
   // First lock all stripes.  Then double bucket table size, rehash,
@@ -532,6 +594,45 @@ class StripedMap<K,V> implements OurMap<K,V> {
         node = node.next;
       return node;
     }
+	
+    // Assumes locks[getHash(k) % lockCount] is held by the thread
+    public static <K,V> ItemNode<K,V> delete(ItemNode<K,V> node, K k, Holder<ItemNode<K,V>> old) {
+      if (node == null)
+		return null;
+	  if (k.equals(node.k)) {
+		old.set(node);
+		return node.next;
+	  }
+	  else
+	  {
+		  ItemNode<K,V> newNode = ItemNode.delete(node.next,k,old);
+		  if (newNode == node.next)
+			  return node;
+		  else
+			  return new ItemNode<K,V>(k,node.v,newNode);
+	  }
+	 
+	  
+    }
+  }
+  
+  static class Holder<T>{
+	private T v;
+	public Holder() { }
+	public Holder(T initialValue)
+	{
+		this.v = initialValue;
+	}
+	
+	public void set(T v)
+	{
+		this.v = v;
+	}
+	
+	public T get()
+	{
+		return v;
+	}
   }
 }
 
