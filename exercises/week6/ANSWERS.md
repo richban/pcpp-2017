@@ -15,6 +15,9 @@
 
 **Implemented: TestStripedMap.java**
 
+It's important because it improves the scalabillity of the implementation.
+A stripe might be updated right after we read it's size, therefore we have to
+hold the lock for while we read and write.
 ## 3
 *Implement method V putIfAbsent(K k, V v) using lock striping. It must work as in Java’s Concur- rentHashMap, that is, atomically do the following: check whether key k is already in the map; if it is, return the associated value; and if it is not, add (k,v) to the map and return null. The implementation can be similar to putIfAbsent in class SynchronizedMap<K,V> but should of course only lock on the stripe that will hold key k. It should use the ItemNode.search auxiliary method. Remember to increment the relevant sizes[stripe] count if any entry was added. Ignore reallocateBuckets for now*
 
@@ -57,7 +60,7 @@ WrapConcHashMap       16          45341.3 us    1478.50          8
 ```
 
 ## 9
-*Whatadvantagesaretheretousingasmallnumber(say32or16)ofstripesinsteadofsimplyhavingastripe for each entry in the buckets table? Discuss*
+*What advantages are there to using a small number (say 32 or 16) of stripes instead of simply having a stripe for each entry in the buckets table? Discuss*
 
 ## 10
 *Why can using 32 stripes improve performance even if one never runs more than, say, 16 threads? Discuss.*
