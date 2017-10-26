@@ -141,7 +141,7 @@ execution of mutually exclusive sections of code.
 
 
 ## Task 3
-* Why do you not need to write to the stripe size if nothing was added?
+*Why do you not need to write to the stripe size if nothing was added?
  If no nodes need to be added then the stripe size will remain unchanged.*
 
 ## Task 4-5
