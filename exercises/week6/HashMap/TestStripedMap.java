@@ -15,7 +15,7 @@ public class TestStripedMap {
   public static void main(String[] args) {
     SystemInfo();
     testAllMaps();    // Must be run with: java -ea TestStripedMap 
-    exerciseAllMaps();
+    // exerciseAllMaps();
     // timeAllMaps();
   }
 
@@ -153,10 +153,10 @@ public class TestStripedMap {
   }
 
   private static void testAllMaps() {
-    testMap(new SynchronizedMap<Integer,String>(25));
+    // testMap(new SynchronizedMap<Integer,String>(25));
     testMap(new StripedMap<Integer,String>(25, 5));
-    testMap(new StripedWriteMap<Integer,String>(25, 5));
-    testMap(new WrapConcurrentHashMap<Integer,String>());
+    // testMap(new StripedWriteMap<Integer,String>(25, 5));
+    //testMap(new WrapConcurrentHashMap<Integer,String>());
   }
 
   // --- Benchmarking infrastructure ---
@@ -215,7 +215,7 @@ interface Consumer<K,V> {
   void accept(K k, V v);
 }
 
-intvaerface OurMap<K,V> {
+interface OurMap<K,V> {
   boolean containsKey(K k);
   V get(K k);
   V put(K k, V v);
@@ -431,15 +431,20 @@ class StripedMap<K,V> implements OurMap<K,V> {
     final int h = getHash(k), stripe = h % lockCount;
     synchronized (locks[stripe]) {
         final int hash = h % buckets.length;
-        final ItemNode<K,V> node = ItemNode.search(buckets[hash]);
+        final ItemNode<K,V> node = ItemNode.search(buckets[hash], k);
         if (node != null) { return node.v; }
         else { return null; }
     }
   }
 
   public int size() {
-    // TO DO: IMPLEMENT
-    return 0;
+    int hashSize = 0;
+    for (int stripe=0; stripe<lockCount; stripe++) {
+        synchronized (locks[stripe]) {
+            hashSize += sizes[stripe];
+        }
+    }
+    return hashSize;
   }
 
   // Put v at key k, or update if already present 
