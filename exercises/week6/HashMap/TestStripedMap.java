@@ -14,7 +14,7 @@ import java.util.function.IntToDoubleFunction;
 public class TestStripedMap {
   public static void main(String[] args) {
     SystemInfo();
-    testAllMaps();    // Must be run with: java -ea TestStripedMap 
+    // testAllMaps();    // Must be run with: java -ea TestStripedMap 
     exerciseAllMaps();
     // timeAllMaps();
   }
@@ -153,10 +153,10 @@ public class TestStripedMap {
   }
 
   private static void testAllMaps() {
-    testMap(new SynchronizedMap<Integer,String>(25));
+    // testMap(new SynchronizedMap<Integer,String>(25));
     testMap(new StripedMap<Integer,String>(25, 5));
-    testMap(new StripedWriteMap<Integer,String>(25, 5));
-    testMap(new WrapConcurrentHashMap<Integer,String>());
+    // testMap(new StripedWriteMap<Integer,String>(25, 5));
+    //testMap(new WrapConcurrentHashMap<Integer,String>());
   }
 
   // --- Benchmarking infrastructure ---
@@ -428,13 +428,23 @@ class StripedMap<K,V> implements OurMap<K,V> {
 
   // Return value v associated with key k, or null
   public V get(K k) {
-    // TO DO: IMPLEMENT
-    return null;
+    final int h = getHash(k), stripe = h % lockCount;
+    synchronized (locks[stripe]) {
+        final int hash = h % buckets.length;
+        final ItemNode<K,V> node = ItemNode.search(buckets[hash], k);
+        if (node != null) { return node.v; }
+        else { return null; }
+    }
   }
 
   public int size() {
-    // TO DO: IMPLEMENT
-    return 0;
+    int hashSize = 0;
+    for (int stripe=0; stripe<lockCount; stripe++) {
+        synchronized (locks[stripe]) {
+            hashSize += sizes[stripe];
+        }
+    }
+    return hashSize;
   }
 
   // Put v at key k, or update if already present 
@@ -457,14 +467,46 @@ class StripedMap<K,V> implements OurMap<K,V> {
 
   // Put v at key k only if absent
   public V putIfAbsent(K k, V v) {
-    // TO DO: IMPLEMENT
-    return null;
+    final int h = getHash(k), stripe = h % lockCount;
+    synchronized (locks[stripe]) {
+      final int hash = h % buckets.length;
+      final ItemNode<K,V> node = ItemNode.search(buckets[hash], k);
+      if (node != null) {
+          return node.v; 
+      } else {
+        buckets[hash] = new ItemNode<K,V>(k, v, buckets[hash]);
+        sizes[stripe]++;
+        return null;
+      }
+    }
+ 
   }
 
   // Remove and return the value at key k if any, else return null
   public V remove(K k) {
-    // TO DO: IMPLEMENT
-    return null;
+      final int h = getHash(k), stripe = h % lockCount;
+      synchronized (locks[stripe]) {
+          final int hash = h % lockCount;
+          ItemNode<K,V> prev = buckets[hash];
+          if (prev == null) {
+              return null;
+          } else if (k.equals(prev.k)) {
+              V old = prev.v;
+              sizes[stripe]--;
+              buckets[hash] = prev.next;
+              return old;
+          } else {
+              while (prev.next != null && !k.equals(prev.next.k)) prev = prev.next;
+              if (prev.next != null) {
+                  V old = prev.next.v;
+                  sizes[stripe]--;
+                  prev.next = prev.next.next;
+                  return old;
+              } else {
+                  return null;
+              }
+          }
+      }
   }
 
   // Iterate over the hashmap's entries one stripe at a time;
@@ -474,7 +516,18 @@ class StripedMap<K,V> implements OurMap<K,V> {
   // may redistribute items between buckets but each item stays in the
   // same stripe.
   public void forEach(Consumer<K,V> consumer) {
-    // TO DO: IMPLEMENT
+      int stripeSize = buckets.length / lockCount;
+      for (int stripe=0; stripe<lockCount; stripe++) {
+          synchronized (locks[stripe]) {
+              for (int b=stripe*stripeSize; b<(stripe+1)*stripeSize; b++) {
+                  ItemNode<K,V> node = buckets[b];
+                  while (node != null) {
+                      consumer.accept(node.k, node.v);
+                      node = node.next;
+                  }
+              }
+          }
+      }
   }
 
   // First lock all stripes.  Then double bucket table size, rehash,
