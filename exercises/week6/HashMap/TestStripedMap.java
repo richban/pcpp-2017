@@ -215,7 +215,7 @@ interface Consumer<K,V> {
   void accept(K k, V v);
 }
 
-interface OurMap<K,V> {
+intvaerface OurMap<K,V> {
   boolean containsKey(K k);
   V get(K k);
   V put(K k, V v);
@@ -428,8 +428,13 @@ class StripedMap<K,V> implements OurMap<K,V> {
 
   // Return value v associated with key k, or null
   public V get(K k) {
-    // TO DO: IMPLEMENT
-    return null;
+    final int h = getHash(k), stripe = h % lockCount;
+    synchronized (locks[stripe]) {
+        final int hash = h % buckets.length;
+        final ItemNode<K,V> node = ItemNode.search(buckets[hash]);
+        if (node != null) { return node.v; }
+        else { return null; }
+    }
   }
 
   public int size() {
