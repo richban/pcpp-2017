@@ -706,12 +706,21 @@ class StripedWriteMap<K,V> implements OurMap<K,V> {
   // Return value v associated with key k, or null
   public V get(K k) {
     // TO DO: IMPLEMENT
-    return null;
+     final ItemNode<K,V>[] bs = buckets;
+    final int h = getHash(k), stripe = h % lockCount, hash = h % bs.length;
+    // The sizes access is necessary for visibility of bs elements
+	Holder<V> holder = new Holder<V>();
+	boolean found = ItemNode.search(bs[hash], k, holder);
+    if (sizes.get(stripe) == 0 || found) return null;
+	return holder.value;
   }
 
   public int size() {
     // TO DO: IMPLEMENT
-    return 0;
+    int count = 0;
+    for (int i = 0; i < lockCount; i++)  
+			count+= sizes.get(i);  
+	return count;
   }
 
   // Put v at key k, or update if already present.  The logic here has
@@ -741,18 +750,58 @@ class StripedWriteMap<K,V> implements OurMap<K,V> {
   // Put v at key k only if absent.
   public V putIfAbsent(K k, V v) {
     // TO DO: IMPLEMENT
-    return null;
+      final int h = getHash(k), stripe = h % lockCount;
+      synchronized (locks[stripe]) {
+      final int hash = h % buckets.length;
+	  Holder<V> holder = new Holder<V>(); 
+      if (ItemNode.search(buckets[hash], k,holder)) {
+        return holder.value;
+      }
+	  else
+	  {
+		  return put(k,v);
+	  }
+    }
   }
 
   // Remove and return the value at key k if any, else return null
   public V remove(K k) {
     // TO DO: IMPLEMENT
-    return null;
+    final int h = getHash(k), stripe = h % lockCount;
+    synchronized (locks[stripe]) {
+      final int hash = h % buckets.length; 
+	  
+	  Holder<V> holder = new Holder<V>(); 
+      if (!ItemNode.search(buckets[hash], k,holder)) {
+        return null;
+      } 
+	  else
+	  {
+		  Holder<V> oldNode = new Holder<V>();
+		  ItemNode<K,V> nodeResult = ItemNode.delete(buckets[hash], k,oldNode);		  
+		  buckets[hash] = nodeResult;
+		  sizes.getAndDecrement(stripe);		  
+		  
+		  return oldNode.value;
+	  }
+    }
   }
 
   // Iterate over the hashmap's entries one stripe at a time.
   public void forEach(Consumer<K,V> consumer) {
-    // TO DO: IMPLEMENT
+    // TO DO: IMPLEMENT 
+	ItemNode<K,V>[] bs = buckets;
+	for (int i = 0; i < lockCount; i++)
+		sizes.get(i);
+	for (int i = 0; i < bs.length; i++)
+	{    
+				ItemNode<K,V> node = bs[i]; 
+				while (node != null)
+				{
+					consumer.accept(node.k,node.v);
+					node = node.next;
+				} 
+	} 
   }
 
   // Now that reallocation happens internally, do not do it externally
