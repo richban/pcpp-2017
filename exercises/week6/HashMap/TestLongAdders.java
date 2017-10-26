@@ -15,7 +15,7 @@
 // Opteron is modest.  In any case, technology-dependent allocation
 // code such as that in NewLongAdderPadded should be hidden in standard
 // libraries where it can be updated by experts as technology and JVM
-// implementation techniques evolve. 
+// implementation techniques evolve.
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
@@ -27,21 +27,23 @@ public class TestLongAdders {
   private static final int threadCount = 32, iterations = 1_000_000;
 
   public static void main(String[] args) {
-    SystemInfo();
-    Mark7("current thread hashCode", 
+    SystemInfo(); /*
+    Mark7("current thread hashCode",
           i -> Thread.currentThread().hashCode());
-    Mark7("ThreadLocalRandom", 
+    Mark7("ThreadLocalRandom",
           i -> ThreadLocalRandom.current().nextInt());
-    Mark7("AtomicLong", 
+    Mark7("AtomicLong",
           i -> exerciseAtomicLong());
-    Mark7("LongAdder", 
+    Mark7("LongAdder",
           i -> exerciseLongAdder());
-    Mark7("LongCounter", 
+    Mark7("LongCounter",
           i -> exerciseLongCounter());
-    Mark7("NewLongAdder", 
+    Mark7("NewLongAdder",
           i -> exerciseNewLongAdder());
-    Mark7("NewLongAdderPadded", 
-          i -> exerciseNewLongAdderPadded());
+    Mark7("NewLongAdderPadded",
+          i -> exerciseNewLongAdderPadded()); */
+    Mark7("NewLongAdderLessPadded",
+          i -> exerciseNewLongAdderLessPadded());
   }
 
   // Timing of Java's AtomicLong
@@ -51,14 +53,14 @@ public class TestLongAdders {
     for (int t=0; t<threadCount; t++) {
       final int myThread = t;
       threads[t] = new Thread(() -> {
-        for (int i=0; i<iterations; i++) 
+        for (int i=0; i<iterations; i++)
           adder.getAndAdd(i);
       });
     }
-    for (int t=0; t<threadCount; t++) 
+    for (int t=0; t<threadCount; t++)
       threads[t].start();
     try {
-      for (int t=0; t<threadCount; t++) 
+      for (int t=0; t<threadCount; t++)
         threads[t].join();
     } catch (InterruptedException exn) { }
     return adder.get();
@@ -71,14 +73,14 @@ public class TestLongAdders {
     for (int t=0; t<threadCount; t++) {
       final int myThread = t;
       threads[t] = new Thread(() -> {
-        for (int i=0; i<iterations; i++) 
+        for (int i=0; i<iterations; i++)
           adder.add(i);
       });
     }
-    for (int t=0; t<threadCount; t++) 
+    for (int t=0; t<threadCount; t++)
       threads[t].start();
     try {
-      for (int t=0; t<threadCount; t++) 
+      for (int t=0; t<threadCount; t++)
         threads[t].join();
     } catch (InterruptedException exn) { }
     return adder.longValue();
@@ -91,14 +93,14 @@ public class TestLongAdders {
     for (int t=0; t<threadCount; t++) {
       final int myThread = t;
       threads[t] = new Thread(() -> {
-        for (int i=0; i<iterations; i++) 
+        for (int i=0; i<iterations; i++)
           adder.add(i);
       });
     }
-    for (int t=0; t<threadCount; t++) 
+    for (int t=0; t<threadCount; t++)
       threads[t].start();
     try {
-      for (int t=0; t<threadCount; t++) 
+      for (int t=0; t<threadCount; t++)
         threads[t].join();
     } catch (InterruptedException exn) { }
     return adder.get();
@@ -111,14 +113,14 @@ public class TestLongAdders {
     for (int t=0; t<threadCount; t++) {
       final int myThread = t;
       threads[t] = new Thread(() -> {
-        for (int i=0; i<iterations; i++) 
+        for (int i=0; i<iterations; i++)
           adder.add(i);
       });
     }
-    for (int t=0; t<threadCount; t++) 
+    for (int t=0; t<threadCount; t++)
       threads[t].start();
     try {
-      for (int t=0; t<threadCount; t++) 
+      for (int t=0; t<threadCount; t++)
         threads[t].join();
     } catch (InterruptedException exn) { }
     return adder.longValue();
@@ -131,14 +133,34 @@ public class TestLongAdders {
     for (int t=0; t<threadCount; t++) {
       final int myThread = t;
       threads[t] = new Thread(() -> {
-        for (int i=0; i<iterations; i++) 
+        for (int i=0; i<iterations; i++)
           adder.add(i);
       });
     }
-    for (int t=0; t<threadCount; t++) 
+    for (int t=0; t<threadCount; t++)
       threads[t].start();
     try {
-      for (int t=0; t<threadCount; t++) 
+      for (int t=0; t<threadCount; t++)
+        threads[t].join();
+    } catch (InterruptedException exn) { }
+    return adder.longValue();
+  }
+
+  // Timing of a striped long, with native array of AtomicLong
+  private static double exerciseNewLongAdderLessPadded() {
+    final NewLongAdderLessPadded adder = new NewLongAdderLessPadded();
+    Thread[] threads = new Thread[threadCount];
+    for (int t=0; t<threadCount; t++) {
+      final int myThread = t;
+      threads[t] = new Thread(() -> {
+        for (int i=0; i<iterations; i++)
+          adder.add(i);
+      });
+    }
+    for (int t=0; t<threadCount; t++)
+      threads[t].start();
+    try {
+      for (int t=0; t<threadCount; t++)
         threads[t].join();
     } catch (InterruptedException exn) { }
     return adder.longValue();
@@ -157,16 +179,16 @@ public class TestLongAdders {
   public static double Mark7(String msg, IntToDoubleFunction f) {
     int n = 10, count = 1, totalCount = 0;
     double dummy = 0.0, runningTime = 0.0, st = 0.0, sst = 0.0;
-    do { 
+    do {
       count *= 2;
       st = sst = 0.0;
       for (int j=0; j<n; j++) {
         Timer t = new Timer();
-        for (int i=0; i<count; i++) 
+        for (int i=0; i<count; i++)
           dummy += f.applyAsDouble(i);
         runningTime = t.check();
         double time = runningTime * 1e6 / count; // microseconds
-        st += time; 
+        st += time;
         sst += time * time;
         totalCount += count;
       }
@@ -177,19 +199,19 @@ public class TestLongAdders {
   }
 
   public static void SystemInfo() {
-    System.out.printf("# OS:   %s; %s; %s%n", 
-                      System.getProperty("os.name"), 
-                      System.getProperty("os.version"), 
+    System.out.printf("# OS:   %s; %s; %s%n",
+                      System.getProperty("os.name"),
+                      System.getProperty("os.version"),
                       System.getProperty("os.arch"));
-    System.out.printf("# JVM:  %s; %s%n", 
-                      System.getProperty("java.vendor"), 
+    System.out.printf("# JVM:  %s; %s%n",
+                      System.getProperty("java.vendor"),
                       System.getProperty("java.version"));
     // The processor identifier works only on MS Windows:
-    System.out.printf("# CPU:  %s; %d \"cores\"%n", 
+    System.out.printf("# CPU:  %s; %d \"cores\"%n",
                       System.getenv("PROCESSOR_IDENTIFIER"),
                       Runtime.getRuntime().availableProcessors());
     java.util.Date now = new java.util.Date();
-    System.out.printf("# Date: %s%n", 
+    System.out.printf("# Date: %s%n",
       new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(now));
   }
 }
@@ -204,8 +226,8 @@ class LongCounter {
   public synchronized void add(int delta) {
     count += delta;
   }
-  public synchronized long get() { 
-    return count; 
+  public synchronized long get() {
+    return count;
   }
 }
 
@@ -214,8 +236,8 @@ class LongCounter {
 // An atomic long that is composed of NSTRIPES AtomicLongs stored next
 // to each other in an array.  Probably not a good idea except deep in
 // the Java class libraries.  In any case, presumably a thread
-// hashcode could be negative, so should use 
-// Math.abs(Thread.currentThread().hashCode() % NSTRIPES) or 
+// hashcode could be negative, so should use
+// Math.abs(Thread.currentThread().hashCode() % NSTRIPES) or
 // (Thread.currentThread().hashCode() & 0x7FFFFFFF) % NSTRIPES.
 
 class NewLongAdder {
@@ -266,3 +288,31 @@ class NewLongAdderPadded {
   }
 }
 
+// ----------------------------------------------------------------------
+
+// Basically the same as NewLongAdder, the only difference
+// being the usage of a standard array of AtomicLong instead
+// of an AromicLongArray
+
+class NewLongAdderLessPadded {
+  private final static int NSTRIPES = 31;
+  private final AtomicLong[] counters;
+
+  public NewLongAdderLessPadded() {
+    this.counters = new AtomicLong[NSTRIPES];
+    for (int stripe=0; stripe<NSTRIPES; stripe++) {
+      counters[stripe] = new AtomicLong();
+    }
+  }
+
+  public void add(long delta) {
+    counters[Thread.currentThread().hashCode() % NSTRIPES].addAndGet(delta);
+  }
+
+  public long longValue() {
+    long result = 0;
+    for (int stripe=0; stripe<NSTRIPES; stripe++)
+      result += counters[stripe].get();
+    return result;
+  }
+}
