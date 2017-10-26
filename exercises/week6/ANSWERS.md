@@ -62,19 +62,40 @@ Give a scenario that demonstrates the lack of thread-safety when the number of b
 
 # Exercise 6.3
 ## Task 1
+*Report the numbers and discuss whether they are plausible*
 
+`AtomicLong` is by far the slowest class, being roughly 4 times slower than
+`NewLongAdder` the second slowest one. This is consistent with Java 8 documentation,
+for `LongAdder`, which states that `AtomicLong` is less suited that the latter
+for high lock-contention scenarios. It also shows the smallest standard deviation,
+which means that it is a poor choice in high-concurrency situations.
+`NewLongAdder`, despite trying to mimic the built-in `LongAdder`, falls short
+behind `LongCounter`, which emulates `AtomicLong` instead. This is probably due
+to the fact that it accomplishes a more complex task, which is more efficiently
+handled at a lower level than Java application code. Nevertheless, it is still
+four times faster than `AtomicLong`, consistently with the four-threaded CPU the
+tests were run on: this confirms that lock contention is a significant issue,
+even for seemingly low-concurrency situations.
+Following closely, we have `LongCounter`: its simple task and its small memory
+footprint are probably the reasons for which it does not have terrible performances
+despite its naive implementation. However, it must be pointed out that the
+standard deviation is impressively high, accounting for almost half of the average
+and being six times `NewLongAdder` one's, the second greatest. Hence, the
+measurements for this class are not really meaningful, as it tends to be for
+simple custom classes which handle naively a library task, and are, of course,
+not as well tested and engineered.
+Then `NewLongAdderPadded` confirms that the weird allocation strategy works for
+average multi-core Intel processors: on a dual-core hyperthreaded i5 CPU it
+carries out the task in less than half of the time than its non-padded counterpart.
+In the fastest position there is the `LongAdder` built-in class: not only it is
+part of the standard library, thus having access to lower-level facilities, but
+it is also the most suited class for our high-concurrency task.
 
+Below, the output of three different runs of the tests:
 # OS:   Linux; 4.13.0-1-amd64; amd64
 # JVM:  Oracle Corporation; 1.8.0_151
 # CPU:  null; 4 "cores"
 # Date: 2017-10-26T19:50:00+0200
-current thread hashCode               0.0 us       0.00  134217728
-ThreadLocalRandom                     0.0 us       0.00   67108864
-AtomicLong                      1309661.4 us   10889.99          2
-LongAdder                        161238.2 us   19707.93          2
-LongCounter                      447485.0 us  258066.75          2
-NewLongAdder                     476577.0 us   44694.15          2
-NewLongAdderPadded               294118.2 us   20283.12          2
 current thread hashCode               0.0 us       0.00  134217728
 ThreadLocalRandom                     0.0 us       0.00   67108864
 current thread hashCode               0.0 us       0.00  134217728
@@ -84,13 +105,11 @@ LongAdder                        157180.7 us    5133.70          2
 LongCounter                      462705.3 us  291588.83          2
 NewLongAdder                     475875.8 us   59364.18          2
 NewLongAdderPadded               194537.9 us   23966.31          2
-current thread hashCode               0.0 us       0.00  134217728
-ThreadLocalRandom                     0.0 us       0.00   67108864
-AtomicLong                      1293032.8 us   27999.85          2
-LongAdder                        157908.5 us    6405.79          2
-LongCounter                      458055.8 us  283810.03          2
-NewLongAdder                     469050.1 us   74704.29          2
-NewLongAdderPadded               189231.0 us   13581.51          2
+
+# OS:   Linux; 4.13.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_151
+# CPU:  null; 4 "cores"
+# Date: 2017-10-26T19:50:00+0200
 current thread hashCode               0.0 us       0.00  134217728
 ThreadLocalRandom                     0.0 us       0.00   67108864
 AtomicLong                      1303676.6 us   11192.57          2
@@ -98,6 +117,11 @@ LongAdder                        168535.8 us   33160.23          2
 LongCounter                      451518.1 us  282737.01          2
 NewLongAdder                     489303.2 us   45384.73          2
 NewLongAdderPadded               191695.1 us   13962.27          2
+
+# OS:   Linux; 4.13.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_151
+# CPU:  null; 4 "cores"
+# Date: 2017-10-26T19:50:00+0200
 current thread hashCode               0.0 us       0.00  134217728
 ThreadLocalRandom                     0.0 us       0.00   67108864
 AtomicLong                      1304980.8 us   17323.54          2
@@ -105,10 +129,32 @@ LongAdder                        156200.1 us    4268.10          2
 LongCounter                      439038.7 us  214808.67          2
 NewLongAdder                     476546.6 us   54344.08          2
 NewLongAdderPadded               191994.3 us   17160.81          2
-current thread hashCode               0.0 us       0.00  134217728
-ThreadLocalRandom                     0.0 us       0.00   67108864
-AtomicLong                      1306937.3 us   20512.81          2
-LongAdder                        168210.8 us   45923.03          2
-LongCounter                      467858.2 us  305831.28          2
-NewLongAdder                     493132.9 us   58445.21          2
-NewLongAdderPadded               189068.7 us   15302.87          2
+
+## Task 2
+**Do those new Object() allocations make any difference, positive or negative, on your version of the
+Java Virtual Machine, and your hardware?**
+
+As stated in the comments in the source code, the CPU the tests are run on is
+in the family targeted by that weird optimization, which means that the `Object`
+allocations lead to improved performances. The results are also consistent with
+those of `NewLongAdder`, which is slower due to the usage of the higher-level API
+`AtomicLongArray` instead of a lower-level facility such as a native array.
+Following, results of three different experiments run:
+
+# OS:   Linux; 4.13.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_151
+# CPU:  null; 4 "cores"
+# Date: 2017-10-26T22:15:07+0200
+NewLongAdderLessPadded           248906.8 us   17014.90          2
+
+# OS:   Linux; 4.13.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_151
+# CPU:  null; 4 "cores"
+# Date: 2017-10-26T22:15:13+0200
+NewLongAdderLessPadded           241544.5 us   21237.45          2
+
+# OS:   Linux; 4.13.0-1-amd64; amd64
+# JVM:  Oracle Corporation; 1.8.0_151
+# CPU:  null; 4 "cores"
+# Date: 2017-10-26T22:15:18+0200
+NewLongAdderLessPadded           249881.9 us   13006.70          2
