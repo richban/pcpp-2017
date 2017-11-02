@@ -8,7 +8,14 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 public class TestLiftGui {
+    public static final long delay = 100000L; // 100 ms == 100000 us
+    public static final long period = 62500L; // 1 / 16 s == 62.5 ms == 62500 us
+
     public static void main(String[] args) {
         final Lift[] lifts = new Lift[] {
             new Lift("Lift 1", new LiftShaft(-2, 10)),
@@ -24,15 +31,9 @@ public class TestLiftGui {
                 lifts[3]
         );
 
-        final Thread[] threads = new Thread[] {
-            new Thread(lifts[0]),
-            new Thread(lifts[1]),
-            new Thread(lifts[2]),
-            new Thread(lifts[3]),
-        };
-
-        for (Thread thread : threads) {
-            thread.start();
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(lifts.length);
+        for (Lift lift : lifts) {
+            executor.scheduleAtFixedRate(lift, delay, period, TimeUnit.MICROSECONDS);
         }
 
         // The graphical presentation
@@ -58,9 +59,10 @@ public class TestLiftGui {
 class LiftDisplay extends JPanel {
   public LiftDisplay(Lift lift, boolean buttonsLeft) {
     setLayout(new BorderLayout());
-    JPanel buttons = new InsideLiftButtons(lift);
+    InsideLiftButtons buttons = new InsideLiftButtons(lift);
     add(buttons, buttonsLeft ? BorderLayout.WEST : BorderLayout.EAST);
     add(lift.shaft, buttonsLeft ? BorderLayout.EAST : BorderLayout.WEST);
+    lift.setInsideButtons(buttons);
   }
 }
 
@@ -71,7 +73,6 @@ class LiftShaft extends Canvas {
 
   public LiftShaft() {
       this(-1, 5);
-    setPreferredSize(new Dimension(50, 280));
   }
 
   public LiftShaft(int lowFloor, int highFloor) {
@@ -110,6 +111,8 @@ class LiftShaft extends Canvas {
 }
 
 class InsideLiftButtons extends JPanel {
+    private JButton[] buttons;
+
   public InsideLiftButtons(final Lift lift) {
     setLayout(new GridBagLayout()); // To center button panel
     JPanel panel = new JPanel();
@@ -117,15 +120,23 @@ class InsideLiftButtons extends JPanel {
     add(panel);
     final int floorCount = lift.highFloor - lift.lowFloor + 1;
     panel.setLayout(new GridLayout(floorCount, 1));
+
+    buttons = new JButton[floorCount];
+
     for (int floor=lift.highFloor; lift.lowFloor<=floor; floor--) {
       final int myFloor = floor;
-      JButton button = new JButton(Integer.toString(floor));
-      panel.add(button);
-      button.addActionListener(new ActionListener() {
+      int index = floor - lift.lowFloor;
+      buttons[index] = new JButton(Integer.toString(myFloor));
+      panel.add(buttons[index]);
+      buttons[index].addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent e) {
             lift.goTo(myFloor);
           }});
     }
+  }
+
+  public void setButtonTextColor(int floor, Color textColor) {
+      // FILL THIS
   }
 }
 
@@ -192,6 +203,13 @@ class LiftController {
 }
 
 class Lift implements Runnable {
+    private static final double wakeUpPerSecond = 1 / (TestLiftGui.period / 1000_000.0);
+
+    // Used in foor animation
+    private double doorShift = 0.0;
+
+    private InsideLiftButtons buttons;
+
   public final int lowFloor, highFloor;
   public final String name;
   public final LiftShaft shaft;
@@ -226,6 +244,10 @@ class Lift implements Runnable {
     this.stops = new Direction[highFloor-lowFloor+1];
   }
 
+  public void setInsideButtons(InsideLiftButtons buttons) {
+      this.buttons = buttons;
+  }
+
   // All these private methods are used in the lift's
   // up-sweep/down-sweep operation:
 
@@ -236,9 +258,27 @@ class Lift implements Runnable {
   }
 
   private synchronized void setStop(int floor, Direction dir) {
+      floor = floor - lowFloor;
       // This takes in account negative floors
       // which can not be array indexes
-      stops[floor-lowFloor] = dir;
+      stops[floor] = dir;
+
+      final InsideLiftButtons buttons = this.buttons;
+
+      if (dir != null) {
+          /* Something like this */
+          // FILL THIS
+          //SwingUtil.invokeLater(() => {
+              //buttons.setButtonTextColor(floor, Color.GREEN);
+          //})
+      }
+      else {
+          /* Something like this */
+          // FILL THIS
+          //SwingUtil.invokeLater(() => {
+              //buttons.setButtonTextColor(floor, Color.BLACK);
+          //})
+      }
   }
 
   // Updates the floor 'stop' status, 'subtracting'
@@ -426,10 +466,11 @@ class Lift implements Runnable {
   }
 
   public void run() {
-    final double wakeUpPerSecond = 16.0;
-    while (true) {
-      try { Thread.sleep((int)(1000.0/wakeUpPerSecond)); }
-      catch (InterruptedException exn) { }
+      // Animating doors
+      if (doorShift != 0.0) {
+          openAndCloseDoors();
+          return;
+      }
 
       // The direction is changed in the previous iterations
       // of the loop. Such modification is made basing on
@@ -524,21 +565,20 @@ class Lift implements Runnable {
       default:
         throw new RuntimeException("impossible Lift.move");
       }
-    }
   }
 
   private void openAndCloseDoors() {
-    final double steps = 16.0;
-    try {
-      for (double doorOpen=0.0; doorOpen <= 1; doorOpen += 1.0/steps) {
-        Thread.sleep((int)(1000.0/steps));
-        shaft.moveTo(floor, doorOpen);
+      // This will not achieve linear speed in the
+      // animation, but it is not important for us
+      shaft.moveTo(floor, Math.sin(doorShift * Math.PI / 2));
+
+      // doorShift will be 2 at the end of the animation
+      if ((int) doorShift == 2) {
+         doorShift = 0.0;
       }
-      for (double doorOpen=1.0; doorOpen >= 0; doorOpen -= 1.0/steps) {
-        Thread.sleep((int)(1000.0/steps));
-        shaft.moveTo(floor, doorOpen);
+      else {
+          doorShift += 1.0 / wakeUpPerSecond;
       }
-    } catch (InterruptedException exn) { }
   }
 }
 
