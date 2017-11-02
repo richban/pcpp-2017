@@ -9,28 +9,58 @@ import java.awt.event.*;
 import javax.swing.*;
 
 public class TestLiftGui {
-  public static void main(String[] args) {
-    // The lift model and associated graphics
-    final LiftShaft shaft1 = new LiftShaft(), 
-      shaft2 = new LiftShaft();
-    final Lift lift1 = new Lift("Lift1", shaft1), 
-      lift2 = new Lift("Lift2", shaft2);
-    final LiftDisplay lift1Display = new LiftDisplay(lift1, true), 
-      lift2Display = new LiftDisplay(lift2, false);
-    LiftController controller = new LiftController(lift1, lift2);
-    Thread t1 = new Thread(lift1), t2 = new Thread(lift2);
-    t1.start(); t2.start();
+    public static void main(String[] args) {
+        final Lift[] lifts = new Lift[] {
+            new Lift("Lift 1", new LiftShaft(-2, 10)),
+            new Lift("Lift 2", new LiftShaft(-2, 10)),
+            new Lift("Lift 3", new LiftShaft(-2, 10)),
+            new Lift("Lift 4", new LiftShaft(-2, 10))
+        };
 
-    // The graphical presentation
-    final JFrame frame = new JFrame("TestLiftGui");
-    final JPanel panel = new JPanel();
-    frame.add(panel);
-    panel.setLayout(new BorderLayout());
-    panel.add(lift1Display, BorderLayout.WEST);
-    panel.add(new OutsideLiftButtons(controller), BorderLayout.CENTER);
-    panel.add(lift2Display, BorderLayout.EAST);
-    frame.pack(); frame.setVisible(true);
-  }
+        final LiftDisplay[] liftDisplays = new LiftDisplay[] {
+            new LiftDisplay(lifts[0], true),
+            new LiftDisplay(lifts[1], false),
+            new LiftDisplay(lifts[2], true),
+            new LiftDisplay(lifts[3], false),
+        };
+
+        LiftController controller = new LiftController(
+                lifts[0],
+                lifts[1],
+                lifts[2],
+                lifts[3]
+        );
+
+        final Thread[] threads = new Thread[] {
+            new Thread(lifts[0]),
+            new Thread(lifts[1]),
+            new Thread(lifts[2]),
+            new Thread(lifts[3]),
+        };
+
+        for (Thread thread : threads) {
+            thread.start();
+        }
+
+        // The graphical presentation
+        final JFrame frame = new JFrame("TestLiftGui");
+
+        final JPanel panel0 = new JPanel();
+        frame.add(panel0, BorderLayout.WEST);
+        panel0.setLayout(new BorderLayout());
+        panel0.add(liftDisplays[0], BorderLayout.WEST);
+        panel0.add(new OutsideLiftButtons(controller), BorderLayout.CENTER);
+        panel0.add(liftDisplays[1], BorderLayout.EAST);
+
+        final JPanel panel1 = new JPanel();
+        frame.add(panel1, BorderLayout.EAST);
+        panel1.setLayout(new BorderLayout());
+        panel1.add(liftDisplays[2], BorderLayout.WEST);
+        panel1.add(new OutsideLiftButtons(controller), BorderLayout.CENTER);
+        panel1.add(liftDisplays[3], BorderLayout.EAST);
+
+        frame.pack(); frame.setVisible(true);
+    }
 }
 
 class LiftDisplay extends JPanel {
@@ -39,15 +69,22 @@ class LiftDisplay extends JPanel {
     JPanel buttons = new InsideLiftButtons(lift);
     add(buttons, buttonsLeft ? BorderLayout.WEST : BorderLayout.EAST);
     add(lift.shaft, buttonsLeft ? BorderLayout.EAST : BorderLayout.WEST);
-  } 
+  }
 }
 
 class LiftShaft extends Canvas {
-  public final int lowFloor = -1, highFloor = 5;
+  public final int lowFloor, highFloor;
   private double atFloor = 0.0,         // in [lowFloor, highFloor]
     doorOpen = 0.0;                     // in [0, 1]
 
   public LiftShaft() {
+      this(-1, 5);
+    setPreferredSize(new Dimension(50, 280));
+  }
+
+  public LiftShaft(int lowFloor, int highFloor) {
+      this.lowFloor = lowFloor;
+      this.highFloor = highFloor;
     setPreferredSize(new Dimension(50, 280));
   }
 
@@ -57,7 +94,7 @@ class LiftShaft extends Canvas {
     repaint();
   }
 
-  public void paint(Graphics g) {    
+  public void paint(Graphics g) {
     super.paint(g);
     final int floorCount = highFloor - lowFloor + 1;
     final int h = getHeight(), w = getWidth(), perFloor = (h-1) / floorCount,
@@ -104,7 +141,7 @@ class OutsideLiftButtons extends JPanel {
   public OutsideLiftButtons(LiftController controller) {
     final int floorCount = controller.highFloor - controller.lowFloor + 1;
     setLayout(new GridLayout(floorCount, 1));
-    for (int floor=controller.highFloor; controller.lowFloor<=floor; floor--) 
+    for (int floor=controller.highFloor; controller.lowFloor<=floor; floor--)
       add(new UpDownButtons(floor, controller));
   }
 }
@@ -113,7 +150,7 @@ class UpDownButtons extends JPanel {
   public UpDownButtons(final int atFloor, final LiftController controller) {
     JPanel panel = new JPanel();
     panel.setBackground(Color.LIGHT_GRAY);
-    add(panel);    
+    add(panel);
     panel.setLayout(new GridLayout(2, 1));
     JButton up = new JButton("u"), down = new JButton("d");
     panel.add(up);
@@ -128,7 +165,7 @@ class UpDownButtons extends JPanel {
         }});
     up.setVisible(atFloor < controller.highFloor);
     down.setVisible(atFloor > controller.lowFloor);
-  } 
+  }
 }
 
 // The lift model --------------------------------------------------
@@ -173,7 +210,7 @@ class Lift implements Runnable {
   private final Direction[] stops;
 
   public Lift(String name, LiftShaft shaft) {
-    this.lowFloor = shaft.lowFloor; 
+    this.lowFloor = shaft.lowFloor;
     this.highFloor = shaft.highFloor;
     this.name = name;
     this.shaft = shaft;
@@ -195,7 +232,7 @@ class Lift implements Runnable {
 
   private synchronized void subtractFromStop(int floor, Direction dir) {
     switch (dir) {
-    case Down: 
+    case Down:
       if (floor == lowestStop())
         setStop(floor, null);
       else
@@ -213,23 +250,23 @@ class Lift implements Runnable {
   }
 
   private synchronized int highestStop() {
-    for (int floor=highFloor; lowFloor<=floor; floor--) 
+    for (int floor=highFloor; lowFloor<=floor; floor--)
       if (getStop(floor) != null)
         return floor;
     return Integer.MIN_VALUE;
   }
 
   private synchronized int lowestStop() {
-    for (int floor=lowFloor; floor<=highFloor; floor++) 
+    for (int floor=lowFloor; floor<=highFloor; floor++)
       if (getStop(floor) != null)
         return floor;
     return Integer.MAX_VALUE;
   }
-  
+
   private synchronized int stopsBetween(double from, double to, Direction dir) { // from <= to
     final int fromFloor = (int)(Math.floor(from)), toFloor = (int)(Math.ceil(to));
     int count = 0;
-    for (int floor=fromFloor; floor<=toFloor; floor++) 
+    for (int floor=fromFloor; floor<=toFloor; floor++)
       if (dir.stopFor(getStop(floor)))
         return count++;
     return count;
@@ -246,7 +283,7 @@ class Lift implements Runnable {
         // down, or serving the requested floor is a continuation of
         // this down sweep; serve during this down sweep
         return (floor - toFloor) + 2 * stopsBetween(toFloor, floor, direction);
-      else 
+      else
         // lift is not above the requested floor or the request is
         // for going up; serve in an up sweep after completing this
         // down sweep
@@ -256,12 +293,12 @@ class Lift implements Runnable {
       final int highestStop = highestStop();
       if (floor < toFloor-0.5 && (thenDir != Direction.Down || toFloor >= highestStop))
         return (toFloor - floor) + 2 * stopsBetween(floor, toFloor, Direction.Up);
-      else 
+      else
         return (highestStop - floor) + 2 * stopsBetween(floor, highestStop, Direction.Up)
             + (highestStop - toFloor) + 2 * stopsBetween(toFloor, highestStop, Direction.Down);
       case None:
         return Math.abs(floor - toFloor);
-    default: 
+    default:
       throw new RuntimeException("impossible timeToServe");
     }
   }
@@ -277,12 +314,12 @@ class Lift implements Runnable {
   }
 
   public void run() {
-    final double steps = 16.0; 
+    final double steps = 16.0;
     while (true) {
       try { Thread.sleep((int)(1000.0/steps)); }
       catch (InterruptedException exn) { }
       switch (direction) {
-      case Up: 
+      case Up:
         if ((int)floor == floor) { // At a floor, maybe stop here
           Direction afterStop = getStop((int)floor);
           if (afterStop != null && (afterStop != Direction.Down || (int)floor == highestStop())) {
@@ -296,11 +333,11 @@ class Lift implements Runnable {
         } else
           direction = Direction.None;
         break;
-      case Down: 
+      case Down:
         if ((int)floor == floor) { // At a floor, maybe stop here
           Direction afterStop = getStop((int)floor);
           if (afterStop != null && (afterStop != Direction.Up || (int)floor == lowestStop())) {
-            openAndCloseDoors(); 
+            openAndCloseDoors();
             subtractFromStop((int)floor, direction);
           }
         }
@@ -310,29 +347,29 @@ class Lift implements Runnable {
         } else
           direction = Direction.None;
         break;
-      case None: 
+      case None:
         final int lowestStop = lowestStop(), highestStop = highestStop();
-        if (floor >= lowestStop) 
+        if (floor >= lowestStop)
           direction = Direction.Down;
-        else if (floor <= highestStop) 
+        else if (floor <= highestStop)
           direction = Direction.Up;
         break;
       default: throw new RuntimeException("impossible Lift.move");
       }
     }
   }
-  
+
   private void openAndCloseDoors() {
-    final double steps = 16.0; 
-    try { 
+    final double steps = 16.0;
+    try {
       for (double doorOpen=0.0; doorOpen <= 1; doorOpen += 1.0/steps) {
-        Thread.sleep((int)(1000.0/steps)); 
+        Thread.sleep((int)(1000.0/steps));
         shaft.moveTo(floor, doorOpen);
       }
       for (double doorOpen=1.0; doorOpen >= 0; doorOpen -= 1.0/steps) {
-        Thread.sleep((int)(1000.0/steps)); 
+        Thread.sleep((int)(1000.0/steps));
         shaft.moveTo(floor, doorOpen);
-      } 
+      }
     } catch (InterruptedException exn) { }
   }
 }
@@ -347,16 +384,16 @@ enum Direction {
   public boolean stopFor(Direction dirAfter) { // may be null
     return dirAfter != null && (dirAfter == Both || dirAfter == this);
   }
-  
+
   public Direction add(Direction dir) {
     switch (this) {
-    case Up: 
+    case Up:
       return (dir==Down || dir==Both) ? Both : this;
-    case Down: 
+    case Down:
       return (dir==Up   || dir==Both) ? Both : this;
-    case None: 
+    case None:
       return dir != null ? dir : this;
-    case Both: 
+    case Both:
       return this;
     default: throw new RuntimeException("impossible Direction.add");
     }
@@ -364,9 +401,9 @@ enum Direction {
 
   public Direction subtractFrom(Direction dirAfter) {  // may be null
     switch (this) {
-    case Up: 
+    case Up:
       return (dirAfter==Down || dirAfter==Both) ? Down : null;
-    case Down: 
+    case Down:
       return (dirAfter==Up   || dirAfter==Both) ? Up : null;
     default: throw new RuntimeException("impossible Direction.subtractFrom");
     }
