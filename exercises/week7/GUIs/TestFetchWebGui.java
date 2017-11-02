@@ -21,10 +21,13 @@ import java.io.IOException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.ArrayList;
+
 public class TestFetchWebGui {
   public static void main(String[] args) {
-    badFetch();
-    // goodFetch();
+    // badFetch();
+    goodFetch();
   }
 
   // (0) This version performs all the slow web access work on the
@@ -143,46 +146,105 @@ public class TestFetchWebGui {
   }
 
   static class DownloadWorker extends SwingWorker<String,String> {
-    private final TextArea textArea; 
+    private final TextArea textArea;
+	
+	//Atomic counter for completed urls/Swingworker subclasses.
+	private final AtomicInteger count = new AtomicInteger();
 
     public DownloadWorker(TextArea textArea) {
       this.textArea = textArea;
     }
-
+ 
+	
     // Called on a separate worker thread, not the event thread, and
     // hence cannot write to textArea.
     public String doInBackground() {
-      StringBuilder sb = new StringBuilder();
-      int count = 0;
-      for (String url : urls) {
-        // if (isCancelled())			    // (3)
-        //   break;
-	System.out.println("Fetching " + url);
-        String page = getPage(url, 200),
-          result = String.format("%-40s%7d%n", url, page.length());
-        sb.append(result); // (1)
-	//      setProgress((100 * ++count) / urls.length); // (2)
-	//	publish(result); // (4)
+		
+	  //Create an arrayList that is going to contain SwingWorkers. This will allow us to
+	  //execute all SwingWorkers and keep a reference to them so that we can wait for the completion
+	  //of each afterwords. 
+	  ArrayList<Object> workers = new ArrayList<Object>();
+	  
+	  //Iterate urls
+      for (int i = 0; i < urls.length; i++) {
+		  //url of webpage to download
+		  String url = urls[i];
+		  
+		  //Instantiate Swingworker
+		  SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+			@Override
+			public String doInBackground() {
+				if (isCancelled())			    // (3)
+					return null;
+				System.out.println("Fetching " + url);
+				String page = getPage(url, 200),
+				result = String.format("%-40s%7d%n", url, page.length());
+				return result;
+				}
+				
+				
+			@Override
+			public void done() {
+				  try { 		
+					if (isCancelled())
+						return;			
+					
+					textArea.append(get());	  
+					int c = count.incrementAndGet();
+					setProgress((100 * c) / urls.length);
+					
+					synchronized (count) {
+						count.notifyAll();
+					}
+						
+				  } catch (InterruptedException exn) { }
+					catch (ExecutionException exn) { throw new RuntimeException(exn.getCause()); }
+					catch (CancellationException exn) { textArea.append("Yrk"); }  // (3)
+				}						
+			};
+			
+			//Add PropertyChangeListener for progress such that if the Swingworker subclass reports
+			//a change in progress, it will be reported as a new progress for DownloadWorker.
+		  workers.add(worker);
+		  worker.addPropertyChangeListener(new PropertyChangeListener() {
+				public void propertyChange(PropertyChangeEvent e) {
+				  if ("progress".equals(e.getPropertyName())) {
+					setProgress((Integer)e.getNewValue());
+				  }}});
+				  
+			//Execute SwingWorker
+		  worker.execute();
       }
-      return sb.toString();
+	  while (count.get() != urls.length) {
+		  
+		  try { 	
+		  synchronized (count) {
+			count.wait();
+		  }
+		   } catch (InterruptedException exn) { }
+			 catch (CancellationException exn) {  } 
+			 
+		  //If DownloadWorker is cancelled, propagate it to the SwingWorker subclasses.
+		  if (isCancelled()) {			    // (3)
+			for (Object worker : workers)
+				((SwingWorker<String, Void>)worker).cancel(false);
+			break;
+		  }
+	  }
+	  
+      return null;
     }
-  
+	
     // (4) Called on the event thread to process results previously
     // published by calls to the publish method.
     public void process(List<String> results) {
-      for (String result : results)
-        textArea.append(result);
+		
     }
 
     // Called in the event thread when done() has terminated, whether
     // by completing or by being cancelled.
-    public void done() {
-      try { 
-        textArea.append(get());
-        textArea.append("Done"); 
-      } catch (InterruptedException exn) { }
-        catch (ExecutionException exn) { throw new RuntimeException(exn.getCause()); }
-        catch (CancellationException exn) { textArea.append("Yrk"); }  // (3)
+    public void done() {      			
+		textArea.append("done");;	
     }
   }
 }
