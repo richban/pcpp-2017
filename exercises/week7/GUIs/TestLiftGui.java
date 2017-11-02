@@ -17,13 +17,6 @@ public class TestLiftGui {
             new Lift("Lift 4", new LiftShaft(-2, 10))
         };
 
-        final LiftDisplay[] liftDisplays = new LiftDisplay[] {
-            new LiftDisplay(lifts[0], true),
-            new LiftDisplay(lifts[1], true),
-            new LiftDisplay(lifts[2], false),
-            new LiftDisplay(lifts[3], false),
-        };
-
         LiftController controller = new LiftController(
                 lifts[0],
                 lifts[1],
@@ -49,11 +42,14 @@ public class TestLiftGui {
         frame.add(panel);
         panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
 
-        panel.add(liftDisplays[0]);
-        panel.add(liftDisplays[1]);
+        int k = 0;
+        for (; k < lifts.length / 2; ++k) {
+            panel.add(new LiftDisplay(lifts[k], true));
+        }
         panel.add(new OutsideLiftButtons(controller));
-        panel.add(liftDisplays[2]);
-        panel.add(liftDisplays[3]);
+        for (; k < lifts.length; ++k) {
+            panel.add(new LiftDisplay(lifts[k], false));
+        }
 
         frame.pack(); frame.setVisible(true);
     }
@@ -206,12 +202,27 @@ class Lift implements Runnable {
   private final Direction[] stops;
 
   public Lift(String name, LiftShaft shaft) {
+    // Topmost floor this elevator can reach
     this.lowFloor = shaft.lowFloor;
+
+    // Lowermost floor this elevator can reach
     this.highFloor = shaft.highFloor;
+
     this.name = name;
     this.shaft = shaft;
+
+    // Prograss to a floor. When integer,
+    // it means that such floor is actually reached.
     this.floor = 0.0;
+
+    // Current direction
     this.direction = Direction.None;
+
+    // Every floor will tell wether the elevator
+    // will stop there, and if it will in an upward
+    // sweep, downwards or both.
+    // Only floors for at which the elevator
+    // will stop are not null.
     this.stops = new Direction[highFloor-lowFloor+1];
   }
 
@@ -219,32 +230,58 @@ class Lift implements Runnable {
   // up-sweep/down-sweep operation:
 
   private synchronized Direction getStop(int floor) {
+      // This takes in account negative floors
+      // which can not be array indexes
     return stops[floor-lowFloor];
   }
 
   private synchronized void setStop(int floor, Direction dir) {
-    stops[floor-lowFloor] = dir;
+      // This takes in account negative floors
+      // which can not be array indexes
+      stops[floor-lowFloor] = dir;
   }
 
+  // Updates the floor 'stop' status, 'subtracting'
+  // the passed direction from the current floor.
+  //
+  // Called every time the lift wakes up from sleeping
+  // to update its own status.
   private synchronized void subtractFromStop(int floor, Direction dir) {
     switch (dir) {
-    case Down:
-      if (floor == lowestStop())
-        setStop(floor, null);
-      else
-        setStop(floor, dir.subtractFrom(getStop(floor)));
-      break;
-    case Up:
-      if (floor == highestStop())
-        setStop(floor, null);
-      else
-        setStop(floor, dir.subtractFrom(getStop(floor)));
-      break;
-    default:
-      throw new RuntimeException("impossible Lift.subtractFromStop");
+        case Down:
+          if (floor == lowestStop())
+
+            // reached destination, clearing stop
+            setStop(floor, null);
+          else
+
+            // Updating floor, setting to null as appropriate
+            setStop(floor, dir.subtractFrom(getStop(floor)));
+          break;
+        case Up:
+          if (floor == highestStop())
+
+            // reached destination, clearing stop
+            setStop(floor, null);
+          else
+
+            // Updating floor, setting to null as appropriate
+            setStop(floor, dir.subtractFrom(getStop(floor)));
+          break;
+        default:
+          throw new RuntimeException("impossible Lift.subtractFromStop");
     }
   }
 
+  /**
+   * Returns the topmost floor in the current sweep.
+   *
+   * This method returns the topmost floor in the
+   * current sweep, that is the highest index for
+   * which the stop is not null.
+   *
+   * @return The index of the topmost floor in the current sweep.
+   */
   private synchronized int highestStop() {
     for (int floor=highFloor; lowFloor<=floor; floor--)
       if (getStop(floor) != null)
@@ -252,6 +289,15 @@ class Lift implements Runnable {
     return Integer.MIN_VALUE;
   }
 
+  /**
+   * Returns the lowermost floor in the current sweep.
+   *
+   * This method returns the lowermost floor in the
+   * current sweep, that is the smallest index for
+   * which the stop is not null.
+   *
+   * @return The index of the lowermost floor in the current sweep.
+   */
   private synchronized int lowestStop() {
     for (int floor=lowFloor; floor<=highFloor; floor++)
       if (getStop(floor) != null)
@@ -259,41 +305,105 @@ class Lift implements Runnable {
     return Integer.MAX_VALUE;
   }
 
+  /**
+   * Returns the number of floors within a range for which
+   * the elevator would stop at if sweeping in a given direction.
+   *
+   * @param from The lower floor of the interval.
+   * @param to The higher floor of the interval.
+   * @param dir The direction which should be contained the stops.
+   * @return The number of stops within the range which contain dir.
+   */
   private synchronized int stopsBetween(double from, double to, Direction dir) { // from <= to
     final int fromFloor = (int)(Math.floor(from)), toFloor = (int)(Math.ceil(to));
     int count = 0;
     for (int floor=fromFloor; floor<=toFloor; floor++)
-      if (dir.stopFor(getStop(floor)))
+      if (dir.isContainedBy(getStop(floor)))
         return count++;
     return count;
   }
 
+  /**
+   * Returns a number representing the time to move between
+   * two floors in a specified direction.
+   *
+   * This methods returns a number which represents the time it
+   * will take to go from one floor to another, moving in the
+   * specified direction.
+   * It takes the current stops in account. In particular, if
+   * the elevator is to stop at a floor within the range, going
+   * in the specified direction, the floor will count three timeToServe
+   * than normal.
+   *
+   * @param from The floor to move from.
+   * @param to The floor to move to.
+   * @param dir The direction to move in.
+   * @return A number representig the time.
+   */
+  private synchronized double timeToGo(double from, double to, Direction dir) {
+      return
+            // Every floor counts once
+            Math.abs(to - from)
+            // Floors included in the directino count twice more, hence three times
+            + 2 * stopsBetween(from, to, dir);
+  }
+
   // Estimate the lift's time to serve toFloor in the desired
   // direction; called by lift controller on the event thread
-  public synchronized double timeToServe(int toFloor, Direction thenDir) {
-    switch (direction) {
+  public synchronized double timeToServe(int requestedFloor, Direction requestedDir) {
+    switch (this.direction) {
     case Down:
-      final int lowestStop = lowestStop();
-      if (floor > toFloor+0.5 && (thenDir != Direction.Up || toFloor <= lowestStop))
-        // lift is above requested floor and request is for going
-        // down, or serving the requested floor is a continuation of
-        // this down sweep; serve during this down sweep
-        return (floor - toFloor) + 2 * stopsBetween(toFloor, floor, direction);
+      final int lowestStop = this.lowestStop();
+      // The elevator is going down. The requested floor is
+      // below the current one. The requested direction includes
+      // going down or the requested floor is below the
+      // lowest stop of the current swep.
+      //
+      // This means that the request can be served by continuing
+      // going down in the current sweep.
+      if (this.floor > requestedFloor + 0.5
+            && (
+                requestedDir != Direction.Up
+                || requestedFloor <= lowestStop
+                )
+        )
+        return this.timeToGo(floor, requestedFloor, direction);
       else
-        // lift is not above the requested floor or the request is
-        // for going up; serve in an up sweep after completing this
-        // down sweep
-        return (floor - lowestStop) + 2 * stopsBetween(lowestStop, floor, Direction.Down)
-          + (toFloor - lowestStop) + 2 * stopsBetween(lowestStop, toFloor, Direction.Up);
+          // The elevator can not serve the request by continuing
+          // the downwards sweep, because one or more of the necessary
+          // conditions are not met.
+          //
+          // This means that the request must be served by continuing
+          // going down in the current sweep and the going up.
+        return this.timeToGo(floor, lowestStop, Direction.Down)
+          + this.timeToGo(lowestStop, requestedFloor, Direction.Up);
     case Up:
-      final int highestStop = highestStop();
-      if (floor < toFloor-0.5 && (thenDir != Direction.Down || toFloor >= highestStop))
-        return (toFloor - floor) + 2 * stopsBetween(floor, toFloor, Direction.Up);
-      else
-        return (highestStop - floor) + 2 * stopsBetween(floor, highestStop, Direction.Up)
-            + (highestStop - toFloor) + 2 * stopsBetween(toFloor, highestStop, Direction.Down);
+        final int highestStop = highestStop();
+        // The elevator is going up. The requested floor is
+        // above the current one. The requested direction includes
+        // going up or the requested floor is above the
+        // highest stop of the current swep.
+        //
+        // This means that the request can be served by continuing
+        // going up in the current sweep.
+        if (this.floor < requestedFloor - 0.5
+                && (
+                    requestedDir != Direction.Down
+                    || requestedFloor >= highestStop
+                )
+            )
+            return this.timeToGo(floor, requestedFloor, direction);
+        else
+            // The elevator can not serve the request by continuing
+            // the upwards sweep, because one or more of the necessary
+            // conditions are not met.
+            //
+            // This means that the request must be served by continuing
+            // going up in the current sweep and the going down.
+            return this.timeToGo(floor, highestStop, Direction.Up)
+                + this.timeToGo(highestStop, requestedFloor, Direction.Down);
       case None:
-        return Math.abs(floor - toFloor);
+        return Math.abs(floor - requestedFloor);
     default:
       throw new RuntimeException("impossible timeToServe");
     }
@@ -301,56 +411,118 @@ class Lift implements Runnable {
 
   // External request from lift controller (on event thread):
   public synchronized void customerAt(int floor, Direction thenDir /* not null */) {
+
+      // 'Adds' the passed direction to the passed floor
     setStop(floor, thenDir.add(getStop(floor)));
   }
 
   // Internal request from the lift's own buttons (on event thread):
   public synchronized void goTo(int floor) {
+
+      // Sets the direction for the passed floor
+      // to None if it is null, leaves it untouched
+      // otherwise
     setStop(floor, Direction.None.add(getStop(floor)));
   }
 
   public void run() {
-    final double steps = 16.0;
+    final double wakeUpPerSecond = 16.0;
     while (true) {
-      try { Thread.sleep((int)(1000.0/steps)); }
+      try { Thread.sleep((int)(1000.0/wakeUpPerSecond)); }
       catch (InterruptedException exn) { }
-      switch (direction) {
-      case Up:
-        if ((int)floor == floor) { // At a floor, maybe stop here
-          Direction afterStop = getStop((int)floor);
-          if (afterStop != null && (afterStop != Direction.Down || (int)floor == highestStop())) {
-            openAndCloseDoors();
-            subtractFromStop((int)floor, direction);
-          }
-        }
-        if (floor < highestStop()) {
-          floor += direction.delta / steps;
-          shaft.moveTo(floor, 0.0);
-        } else
-          direction = Direction.None;
+
+      // The direction is changed in the previous iterations
+      // of the loop. Such modification is made basing on
+      // the status of the stops, which are changed by the
+      // lift controller (when the u/d buttons are pressed),
+      // or by the ui directly, when the internal buttons of
+      // the elevator are clicked.
+      switch (this.direction) {
+          case Up:
+
+            // At a floor, maybe stop here
+            if ((int)floor == floor) {
+                Direction afterStop = getStop((int)floor);
+
+                // The floor is a stop. Such stop is not for
+                // going down (the opposite direction than the
+                // current, we are in the Up case), or the floor
+                // is the highest stop
+                //
+                // Displaying door animation and updating stop.
+                if (afterStop != null
+                        && (
+                            afterStop != Direction.Down
+                            || (int)floor == highestStop()
+                    )
+                ) {
+                    openAndCloseDoors();
+                    subtractFromStop((int)floor, direction);
+                }
+            }
+
+            // Progressing to a floor, but not arrived yet
+            if (floor < highestStop()) {
+                floor += direction.delta / wakeUpPerSecond;
+                shaft.moveTo(floor, 0.0);
+            }
+
+            // Already at or above the highest floor, no longer moving
+            else {
+                direction = Direction.None;
+            }
         break;
+
+
       case Down:
-        if ((int)floor == floor) { // At a floor, maybe stop here
+
+        // At a floor, maybe stop here
+        if ((int)floor == floor) {
           Direction afterStop = getStop((int)floor);
-          if (afterStop != null && (afterStop != Direction.Up || (int)floor == lowestStop())) {
+
+          // The floor is a stop. Such stop is not for
+          // going up (the opposite direction than the
+          // current, we are in the Down case), or the floor
+          // is the lowest stop
+          //
+          // Displaying door animation and updating stop.
+          if (afterStop != null
+                && (
+                    afterStop != Direction.Up
+                    || (int)floor == lowestStop()
+                )
+          ) {
             openAndCloseDoors();
             subtractFromStop((int)floor, direction);
           }
         }
+
+        // Progressing to a floor, but not arrived yet
         if (floor > lowestStop()) {
-          floor += direction.delta / steps;
+          floor += direction.delta / wakeUpPerSecond;
           shaft.moveTo(floor, 0.0);
-        } else
-          direction = Direction.None;
+        }
+
+        // Already at or below the lowest floor, no longer moving
+        else {
+            direction = Direction.None;
+        }
         break;
+
       case None:
         final int lowestStop = lowestStop(), highestStop = highestStop();
+
+        // Above lowest stop => going down
         if (floor >= lowestStop)
           direction = Direction.Down;
+
+        // Below highest stop => going up
         else if (floor <= highestStop)
           direction = Direction.Up;
         break;
-      default: throw new RuntimeException("impossible Lift.move");
+
+      default:
+        throw new RuntimeException("impossible Lift.move");
       }
     }
   }
@@ -377,10 +549,26 @@ enum Direction {
     this.delta = delta;
   }
 
-  public boolean stopFor(Direction dirAfter) { // may be null
+  // Returns whether the direction is contained in this instance.
+  //
+  // Both contains anything.
+  // Up, Down and None contains themselves only.
+  public boolean isContainedBy(Direction dirAfter) { // may be null
     return dirAfter != null && (dirAfter == Both || dirAfter == this);
   }
 
+  // Performs 'addition', which means
+  //
+  // Up + Down == Both
+  // Down + Up == Both
+  // Both as the second operand is the wildcard, as it counts both as Down and Up.
+  //
+  // Both + * == Both
+  // None + * == *
+  //
+  // Used when updating the elevator stops when a request is received,
+  // which happens both from the up and down button from outside the
+  // elevator and from the buttons inside the elevator itself.
   public Direction add(Direction dir) {
     switch (this) {
     case Up:
@@ -395,6 +583,15 @@ enum Direction {
     }
   }
 
+  // Performs 'subtraction', which means
+  //
+  // Up - Down == Down
+  // Down - Up == Up
+  // Both as the second operand is the wildcard, as it counts both as Down and Up.
+  //
+  // In any other case, returns null.
+  //
+  // Used when updating the elevator stops after a floor is reached.
   public Direction subtractFrom(Direction dirAfter) {  // may be null
     switch (this) {
     case Up:
