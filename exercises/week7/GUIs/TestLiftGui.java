@@ -59,9 +59,10 @@ public class TestLiftGui {
 class LiftDisplay extends JPanel {
   public LiftDisplay(Lift lift, boolean buttonsLeft) {
     setLayout(new BorderLayout());
-    JPanel buttons = new InsideLiftButtons(lift);
+    InsideLiftButtons buttons = new InsideLiftButtons(lift);
     add(buttons, buttonsLeft ? BorderLayout.WEST : BorderLayout.EAST);
     add(lift.shaft, buttonsLeft ? BorderLayout.EAST : BorderLayout.WEST);
+    lift.setInsideButtons(buttons);
   }
 }
 
@@ -72,7 +73,6 @@ class LiftShaft extends Canvas {
 
   public LiftShaft() {
       this(-1, 5);
-    setPreferredSize(new Dimension(50, 280));
   }
 
   public LiftShaft(int lowFloor, int highFloor) {
@@ -111,6 +111,8 @@ class LiftShaft extends Canvas {
 }
 
 class InsideLiftButtons extends JPanel {
+    private JButton[] buttons;
+
   public InsideLiftButtons(final Lift lift) {
     setLayout(new GridBagLayout()); // To center button panel
     JPanel panel = new JPanel();
@@ -118,15 +120,23 @@ class InsideLiftButtons extends JPanel {
     add(panel);
     final int floorCount = lift.highFloor - lift.lowFloor + 1;
     panel.setLayout(new GridLayout(floorCount, 1));
+
+    buttons = new JButton[floorCount];
+
     for (int floor=lift.highFloor; lift.lowFloor<=floor; floor--) {
       final int myFloor = floor;
-      JButton button = new JButton(Integer.toString(floor));
-      panel.add(button);
-      button.addActionListener(new ActionListener() {
+      int index = floor - lift.lowFloor;
+      buttons[index] = new JButton(Integer.toString(myFloor));
+      panel.add(buttons[index]);
+      buttons[index].addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent e) {
             lift.goTo(myFloor);
           }});
     }
+  }
+
+  public void setButtonTextColor(int floor, Color textColor) {
+      // FILL THIS
   }
 }
 
@@ -197,6 +207,9 @@ class Lift implements Runnable {
 
     // Used in foor animation
     private double doorShift = 0.0;
+
+    private InsideLiftButtons buttons;
+
   public final int lowFloor, highFloor;
   public final String name;
   public final LiftShaft shaft;
@@ -231,6 +244,10 @@ class Lift implements Runnable {
     this.stops = new Direction[highFloor-lowFloor+1];
   }
 
+  public void setInsideButtons(InsideLiftButtons buttons) {
+      this.buttons = buttons;
+  }
+
   // All these private methods are used in the lift's
   // up-sweep/down-sweep operation:
 
@@ -241,9 +258,27 @@ class Lift implements Runnable {
   }
 
   private synchronized void setStop(int floor, Direction dir) {
+      floor = floor - lowFloor;
       // This takes in account negative floors
       // which can not be array indexes
-      stops[floor-lowFloor] = dir;
+      stops[floor] = dir;
+
+      final InsideLiftButtons buttons = this.buttons;
+
+      if (dir != null) {
+          /* Something like this */
+          // FILL THIS
+          //SwingUtil.invokeLater(() => {
+              //buttons.setButtonTextColor(floor, Color.GREEN);
+          //})
+      }
+      else {
+          /* Something like this */
+          // FILL THIS
+          //SwingUtil.invokeLater(() => {
+              //buttons.setButtonTextColor(floor, Color.BLACK);
+          //})
+      }
   }
 
   // Updates the floor 'stop' status, 'subtracting'
