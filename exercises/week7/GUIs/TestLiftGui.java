@@ -111,7 +111,8 @@ class LiftShaft extends Canvas {
 }
 
 class InsideLiftButtons extends JPanel {
-    private JButton[] buttons;
+    private final JButton[] buttons;
+    private final int lowFloor;
 
   public InsideLiftButtons(final Lift lift) {
     setLayout(new GridBagLayout()); // To center button panel
@@ -122,21 +123,23 @@ class InsideLiftButtons extends JPanel {
     panel.setLayout(new GridLayout(floorCount, 1));
 
     buttons = new JButton[floorCount];
+    lowFloor = lift.lowFloor;
 
-    for (int floor=lift.highFloor; lift.lowFloor<=floor; floor--) {
-      final int myFloor = floor;
-      int index = floor - lift.lowFloor;
-      buttons[index] = new JButton(Integer.toString(myFloor));
-      panel.add(buttons[index]);
-      buttons[index].addActionListener(new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            lift.goTo(myFloor);
-          }});
+    int floor = lift.highFloor;
+    for (int k = floorCount - 1; k > -1; --k) {
+        final int requestedFloor = floor;
+
+        buttons[k] = new JButton(Integer.toString(floor--));
+        panel.add(buttons[k]);
+        buttons[k].addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+              lift.goTo(requestedFloor);
+            }});
     }
   }
 
   public void setButtonTextColor(int floor, Color textColor) {
-      // FILL THIS
+      buttons[floor - lowFloor].setForeground(textColor);
   }
 }
 
@@ -258,26 +261,26 @@ class Lift implements Runnable {
   }
 
   private synchronized void setStop(int floor, Direction dir) {
-      floor = floor - lowFloor;
       // This takes in account negative floors
       // which can not be array indexes
-      stops[floor] = dir;
+      stops[floor - lowFloor] = dir;
 
-      final InsideLiftButtons buttons = this.buttons;
+      final int finalFloor = floor;
+      final InsideLiftButtons finalButtons = this.buttons;
 
       if (dir != null) {
           /* Something like this */
           // FILL THIS
-          //SwingUtil.invokeLater(() => {
-              //buttons.setButtonTextColor(floor, Color.GREEN);
-          //})
+          SwingUtilities.invokeLater(() -> {
+              finalButtons.setButtonTextColor(finalFloor, Color.GREEN);
+          });
       }
       else {
           /* Something like this */
           // FILL THIS
-          //SwingUtil.invokeLater(() => {
-              //buttons.setButtonTextColor(floor, Color.BLACK);
-          //})
+          SwingUtilities.invokeLater(() -> {
+              finalButtons.setButtonTextColor(finalFloor, Color.BLACK);
+          });
       }
   }
 
