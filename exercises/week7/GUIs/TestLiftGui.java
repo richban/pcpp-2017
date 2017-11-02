@@ -19,8 +19,8 @@ public class TestLiftGui {
 
         final LiftDisplay[] liftDisplays = new LiftDisplay[] {
             new LiftDisplay(lifts[0], true),
-            new LiftDisplay(lifts[1], false),
-            new LiftDisplay(lifts[2], true),
+            new LiftDisplay(lifts[1], true),
+            new LiftDisplay(lifts[2], false),
             new LiftDisplay(lifts[3], false),
         };
 
@@ -44,20 +44,16 @@ public class TestLiftGui {
 
         // The graphical presentation
         final JFrame frame = new JFrame("TestLiftGui");
+        final JPanel panel = new JPanel();
 
-        final JPanel panel0 = new JPanel();
-        frame.add(panel0, BorderLayout.WEST);
-        panel0.setLayout(new BorderLayout());
-        panel0.add(liftDisplays[0], BorderLayout.WEST);
-        panel0.add(new OutsideLiftButtons(controller), BorderLayout.CENTER);
-        panel0.add(liftDisplays[1], BorderLayout.EAST);
+        frame.add(panel);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
 
-        final JPanel panel1 = new JPanel();
-        frame.add(panel1, BorderLayout.EAST);
-        panel1.setLayout(new BorderLayout());
-        panel1.add(liftDisplays[2], BorderLayout.WEST);
-        panel1.add(new OutsideLiftButtons(controller), BorderLayout.CENTER);
-        panel1.add(liftDisplays[3], BorderLayout.EAST);
+        panel.add(liftDisplays[0]);
+        panel.add(liftDisplays[1]);
+        panel.add(new OutsideLiftButtons(controller));
+        panel.add(liftDisplays[2]);
+        panel.add(liftDisplays[3]);
 
         frame.pack(); frame.setVisible(true);
     }
