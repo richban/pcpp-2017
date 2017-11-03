@@ -1,5 +1,10 @@
 # Practical Concurent and Parallel Programming
 
+### How to create the handin zip file on Unix-like systems
+```bash
+cp ../ANSWERS.md ANSWERS.txt && zip handin.zip *.java ANSWERS.txt
+```
+
 ### Discusion
 
 Discuss slides, exams, project, exercises issues here:
