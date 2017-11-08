@@ -24,3 +24,7 @@ are not even called. `containsKey()` is, but its result is not part of the test
 
 ___NOTE: Ask the TA why the whole machinery hangs when `return put(k, v)` is
 inside the `synchronized` block: aren't lock reentrant?___
+
+# Exercise 8.2
+
+## Task 5
