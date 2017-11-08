@@ -27,4 +27,20 @@ inside the `synchronized` block: aren't lock reentrant?___
 
 # Exercise 8.2
 
+## Task 1
+After removing the `synchronized` in 1 block the test passed *almost* on every run, however when removing from 2 blocks the test failed far more.
+
+```bash
+Exception in thread "main" java.lang.AssertionError
+	at TestStripedWriteMap.parallelTest(TestStripedWriteMap.java:262)
+	at TestStripedWriteMap.main(TestStripedWriteMap.java:32)
+```  
+## Task 2
+
+Likewise on previous task 1, on some occurrences the the tests passed.
+
+## Task 3
+
+The functional test discovered correctly that the `sizes` are not correctly updated.
+
 ## Task 5
