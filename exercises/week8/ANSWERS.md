@@ -43,4 +43,8 @@ Likewise on previous task 1, on some occurrences the the tests passed.
 
 The functional test discovered correctly that the `sizes` are not correctly updated.
 
+## Task 4
+
+The absence of atomic reads did not affect the results of the tests. All tests passed.
+
 ## Task 5
