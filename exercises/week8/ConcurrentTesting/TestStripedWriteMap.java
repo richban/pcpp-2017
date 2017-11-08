@@ -207,6 +207,7 @@ public class TestStripedWriteMap {
 
       CyclicBarrier barrier = new CyclicBarrier(threadsCount);
       for (int k = 0; k < threadsCount; ++k) {
+		  final int index = k;
           futures.add(executor.submit(() -> {
               long keysSum = 0;
               String value = Thread.currentThread().getName();
@@ -224,11 +225,11 @@ public class TestStripedWriteMap {
                         break;
 
                       case 1:
-                        keysSum += map.put(key, value) == null ? key : 0;
+                        keysSum += map.put(key, index + ":" + key) == null ? key : 0;
                         break;
 
                         case 2:
-                          keysSum += map.putIfAbsent(key, value) == null ? key : 0;
+                          keysSum += map.putIfAbsent(key, index + ":" + key) == null ? key : 0;
                           break;
 
                         case 3:
@@ -254,6 +255,7 @@ public class TestStripedWriteMap {
       // Used due to final costraints on lambdas
       final LongStream.Builder mapKeys = LongStream.builder();
       map.forEach((key, value) -> {
+		  assert IntStream.range(0, threadsCount).anyMatch((k) -> value.equals(k + ":" + key));
           mapKeys.add(key);
       });
 
