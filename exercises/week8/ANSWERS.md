@@ -48,3 +48,10 @@ The functional test discovered correctly that the `sizes` are not correctly upda
 The absence of atomic reads did not affect the results of the tests. All tests passed.
 
 ## Task 5
+Essentially, we can try to undermine all of the concurrency features used in the
+implementation. Among those not already tested, we can suggest making `buckets`
+not `volatile`: this would cause many calls to `ItemNode` methods to operate on
+out-of-sync data, leading to inconsistencies in the data structure. In particular,
+this would change, compared to a proper update of the buckets, whether or not
+`put()` and `putIfAbsent()` actually insert a pair, and if `remove()` pops it,
+making every thread compute a different key sum than expected.
