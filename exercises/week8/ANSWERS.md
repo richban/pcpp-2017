@@ -27,6 +27,26 @@ inside the `synchronized` block: aren't lock reentrant?___
 
 # Exercise 8.2
 
+## Task 1
+After removing the `synchronized` in 1 block the test passed *almost* on every run, however when removing from 2 blocks the test failed far more.
+
+```bash
+Exception in thread "main" java.lang.AssertionError
+	at TestStripedWriteMap.parallelTest(TestStripedWriteMap.java:262)
+	at TestStripedWriteMap.main(TestStripedWriteMap.java:32)
+```  
+## Task 2
+
+Likewise on previous task 1, on some occurrences the the tests passed.
+
+## Task 3
+
+The functional test discovered correctly that the `sizes` are not correctly updated.
+
+## Task 4
+
+The absence of atomic reads did not affect the results of the tests. All tests passed.
+
 ## Task 5
 Essentially, we can try to undermine all of the concurrency features used in the
 implementation. Among those not already tested, we can suggest making `buckets`
