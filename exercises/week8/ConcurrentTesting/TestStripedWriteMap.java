@@ -26,7 +26,7 @@ public class TestStripedWriteMap {
     public static final int OPERATIONS_PER_THREAD = 100;
 
   public static void main(String[] args) {
-    //seqTest(new StripedWriteMap<Integer, String>(77, 7));    // Must be run with: java -ea TestStripedMap
+    seqTest(new StripedWriteMap<Integer, String>(77, 7));    // Must be run with: java -ea TestStripedMap
 
     switch (args[0].toLowerCase()) {
         case "homebrew":
@@ -203,15 +203,6 @@ public class TestStripedWriteMap {
       return Integer.parseInt(value.substring(0, value.indexOf(':')));
   }
 
-  public static void decrementIfNotMe(int me, int key, String value, long[] counts) {
-      if (value != null) {
-          int otherThread = parseThreadIndex(value);
-          if (otherThread != me) {
-              counts[otherThread] -= key;
-          }
-      }
-  }
-
   public static void parallelTest(final OurMap<Integer, String> map) {
       System.out.printf("Parallel test %n%s%n", map.getClass());
 
@@ -240,20 +231,22 @@ public class TestStripedWriteMap {
 					  }
                       case 1: {
 						String result = map.put(key, index + ":" + key);
-                        keysSum[index] += result == null ? key : 0;
-                        decrementIfNotMe(index, key, result, keysSum);
+                        keysSum[index] += key;
+                        if (result != null) {
+                            keysSum[parseThreadIndex(result)] -= key;
+                        }
                         break;
 					  }
                         case 2: {
 						  String result = map.putIfAbsent(key, index + ":" + key);
                           keysSum[index] += result == null ? key : 0;
-                          decrementIfNotMe(index, key, result, keysSum);
                           break;
 						}
                         case 3: {
 							String result = map.remove(key);
-                            keysSum[index] -= result == null ? 0 : key;
-                            decrementIfNotMe(index, key, result, keysSum);
+                            if (result != null) {
+                                keysSum[parseThreadIndex(result)] -= key;
+                            }
                             break;
 						}
                   }
