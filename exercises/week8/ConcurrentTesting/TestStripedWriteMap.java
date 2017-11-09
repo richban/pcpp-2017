@@ -18,6 +18,7 @@ import java.util.function.IntToDoubleFunction;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -198,19 +199,31 @@ public class TestStripedWriteMap {
     map.forEach((k, v) -> System.out.printf("%10d maps to %s%n", k, v));
   }
 
+  public static int parseThreadIndex(String value) {
+      return Integer.parseInt(value.substring(0, value.indexOf(':')));
+  }
+
+  public static void decrementIfNotMe(int me, int key, String value, long[] counts) {
+      if (value != null) {
+          int otherThread = parseThreadIndex(value);
+          if (otherThread != me) {
+              counts[otherThread] -= key;
+          }
+      }
+  }
+
   public static void parallelTest(final OurMap<Integer, String> map) {
       System.out.printf("Parallel test %n%s%n", map.getClass());
 
-      int threadsCount = Runtime.getRuntime().availableProcessors() * 4;
+      final int threadsCount = Runtime.getRuntime().availableProcessors() * 4;
       ExecutorService executor = Executors.newWorkStealingPool(threadsCount);
-      Collection<Future<Long>> futures = new ArrayList<>(threadsCount);
 
+      Collection<Future<long[]>> futures = new ArrayList<>(threadsCount);
       CyclicBarrier barrier = new CyclicBarrier(threadsCount);
-	  AtomicIntegerArray counts = new AtomicIntegerArray(threadsCount);
       for (int k = 0; k < threadsCount; ++k) {
 		  final int index = k;
           futures.add(executor.submit(() -> {
-              long keysSum = 0;
+              long[] keysSum = new long[threadsCount];
               String value = Thread.currentThread().getName();
               long seed = System.currentTimeMillis() + value.hashCode();
               IntStream randomInts = new Random(seed).ints(OPERATIONS_PER_THREAD);
@@ -227,24 +240,20 @@ public class TestStripedWriteMap {
 					  }
                       case 1: {
 						String result = map.put(key, index + ":" + key);
-                        keysSum += result == null ? key : 0; 
-						counts.incrementAndGet(index);
-						if (result != null)
-							counts.decrementAndGet(Integer.parseInt(result.substring(0,result.indexOf(':'))));							
+                        keysSum[index] += result == null ? key : 0;
+                        decrementIfNotMe(index, key, result, keysSum);
                         break;
 					  }
                         case 2: {
 						  String result = map.putIfAbsent(key, index + ":" + key);
-                          keysSum += result == null ? key : 0;
-						  if (result == null)
-								counts.incrementAndGet(index);	
+                          keysSum[index] += result == null ? key : 0;
+                          decrementIfNotMe(index, key, result, keysSum);
                           break;
 						}
                         case 3: {
 							String result = map.remove(key);
-                            keysSum -= result == null ? 0 : key;
-							if (result != null)
-								counts.decrementAndGet(Integer.parseInt(result.substring(0,result.indexOf(':'))));	
+                            keysSum[index] -= result == null ? 0 : key;
+                            decrementIfNotMe(index, key, result, keysSum);
                             break;
 						}
                   }
@@ -254,10 +263,14 @@ public class TestStripedWriteMap {
           }));
       }
 
-      long threadsKeysSum = 0;
-      for (Future<Long> fut : futures) {
+      long[] threadsKeysSum = new long[threadsCount];
+      Arrays.fill(threadsKeysSum, 0);
+      for (Future<long[]> fut : futures) {
           try {
-                threadsKeysSum += fut.get();
+                long thisSum[] = fut.get();
+                for (int k = 0; k < threadsCount; ++k) {
+                    threadsKeysSum[k] += thisSum[k];
+                }
           }
           catch (InterruptedException | ExecutionException e) {
               System.err.println("A thread was interrupted/had an error...");
@@ -265,16 +278,12 @@ public class TestStripedWriteMap {
       }
 
       // Used due to final costraints on lambdas
-      final LongStream.Builder mapKeys = LongStream.builder();
       map.forEach((key, value) -> {
 		  assert IntStream.range(0, threadsCount).anyMatch((k) -> value.equals(k + ":" + key));
-		  int k = Integer.parseInt(value.substring(0,value.indexOf(':')));
-		  counts.decrementAndGet(k);
-          mapKeys.add(key);
+          threadsKeysSum[parseThreadIndex(value)] -= key;
       });
 
-      assert threadsKeysSum == mapKeys.build().sum();
-      assert IntStream.range(0, threadsCount).allMatch((k) -> counts.get(k) == 0);
+      assert IntStream.range(0, threadsCount).allMatch((k) -> threadsKeysSum[k] == 0);
   }
 }
 
