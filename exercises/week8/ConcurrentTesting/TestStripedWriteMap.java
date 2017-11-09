@@ -25,7 +25,7 @@ public class TestStripedWriteMap {
     public static final int OPERATIONS_PER_THREAD = 100;
 
   public static void main(String[] args) {
-    seqTest(new StripedWriteMap<Integer, String>(77, 7));    // Must be run with: java -ea TestStripedMap
+    //seqTest(new StripedWriteMap<Integer, String>(77, 7));    // Must be run with: java -ea TestStripedMap
 
     switch (args[0].toLowerCase()) {
         case "homebrew":
@@ -206,6 +206,7 @@ public class TestStripedWriteMap {
       Collection<Future<Long>> futures = new ArrayList<>(threadsCount);
 
       CyclicBarrier barrier = new CyclicBarrier(threadsCount);
+	  AtomicIntegerArray counts = new AtomicIntegerArray(threadsCount);
       for (int k = 0; k < threadsCount; ++k) {
 		  final int index = k;
           futures.add(executor.submit(() -> {
@@ -220,21 +221,32 @@ public class TestStripedWriteMap {
                   int key = iterator.next();
 
                   switch (key % 4) {
-                      case 0:
+                      case 0: {
                         map.containsKey(key);
                         break;
-
-                      case 1:
-                        keysSum += map.put(key, index + ":" + key) == null ? key : 0;
+					  }
+                      case 1: {
+						String result = map.put(key, index + ":" + key);
+                        keysSum += result == null ? key : 0; 
+						counts.incrementAndGet(index);
+						if (result != null)
+							counts.decrementAndGet(Integer.parseInt(result.substring(0,result.indexOf(':'))));							
                         break;
-
-                        case 2:
-                          keysSum += map.putIfAbsent(key, index + ":" + key) == null ? key : 0;
+					  }
+                        case 2: {
+						  String result = map.putIfAbsent(key, index + ":" + key);
+                          keysSum += result == null ? key : 0;
+						  if (result == null)
+								counts.incrementAndGet(index);	
                           break;
-
-                        case 3:
-                            keysSum -= map.remove(key) == null ? 0 : key;
+						}
+                        case 3: {
+							String result = map.remove(key);
+                            keysSum -= result == null ? 0 : key;
+							if (result != null)
+								counts.decrementAndGet(Integer.parseInt(result.substring(0,result.indexOf(':'))));	
                             break;
+						}
                   }
               }
 
@@ -256,10 +268,13 @@ public class TestStripedWriteMap {
       final LongStream.Builder mapKeys = LongStream.builder();
       map.forEach((key, value) -> {
 		  assert IntStream.range(0, threadsCount).anyMatch((k) -> value.equals(k + ":" + key));
+		  int k = Integer.parseInt(value.substring(0,value.indexOf(':')));
+		  counts.decrementAndGet(k);
           mapKeys.add(key);
       });
 
       assert threadsKeysSum == mapKeys.build().sum();
+      assert IntStream.range(0, threadsCount).allMatch((k) -> counts.get(k) == 0);
   }
 }
 

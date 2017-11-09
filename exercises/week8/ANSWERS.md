@@ -25,6 +25,20 @@ are not even called. `containsKey()` is, but its result is not part of the test
 ___NOTE: Ask the TA why the whole machinery hangs when `return put(k, v)` is
 inside the `synchronized` block: aren't lock reentrant?___
 
+## Task 4
+***Source code: TestStripedWriteMap.java***
+
+
+## Task 5
+Aside from incrementing/decrementing ints of the counts array as described by the assignment. We chose to not compute by sum to verify the number of elements added
+by a thread. Instead we did something that results in the same, but worked better with out previous code, basically instead of computing the sum of elements added
+by a particular thread, I looped through every element in the map. For each element I would find which thread added it and decremented its counts int. At the end
+we simply need to verify that each counts int has resulted in zero. This will mean that every element from the map is related to a specific element in the counts array.
+
+## Task 6
+As the threads need to affect the counts integer of another thread on remove or put, we have that the counts array datatype of int (from Task 4) is not atomic.
+A better alternative would be to use AtomicIntegerArray which provides threadsafe atomic operation.
+
 # Exercise 8.2
 
 ## Task 1
