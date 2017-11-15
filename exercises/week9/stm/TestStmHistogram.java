@@ -30,6 +30,7 @@ class TestStmHistogram {
 
   private static void countPrimeFactorsWithStmHistogram() {
     final Histogram histogram = new StmHistogram(30);
+    final Histogram total = new StmHistogram(30);
     final int range = 4_000_000;
     final int threadCount = 10, perThread = range / threadCount;
     final CyclicBarrier startBarrier = new CyclicBarrier(threadCount + 1), 
@@ -49,8 +50,13 @@ class TestStmHistogram {
         threads[t].start();
     }
     try { startBarrier.await(); } catch (Exception exn) { }
+	 for(int i = 0; i < 200; i++){
+            total.transferBins(histogram);
+            try{ Thread.sleep(30); } catch(InterruptedException exn){}
+        }
     try { stopBarrier.await(); } catch (Exception exn) { }
     dump(histogram);
+    dump(total);
   }
 
   public static void dump(Histogram histogram) {
