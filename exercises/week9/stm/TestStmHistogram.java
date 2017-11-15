@@ -21,6 +21,7 @@ import org.multiverse.api.callables.TxnVoidCallable;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CyclicBarrier;
+import java.util.stream.IntStream;
 
 class TestStmHistogram {
   public static void main(String[] args) {
@@ -76,7 +77,7 @@ class TestStmHistogram {
   }
 }
 
-interface Histogram {
+interface Histogram { 
   void increment(int bin);
   int getCount(int bin);
   int getSpan();
@@ -89,31 +90,33 @@ class StmHistogram implements Histogram {
   private final TxnInteger[] counts;
 
   public StmHistogram(int span) {
-    throw new RuntimeException("Not implemented");
+    counts = new TxnInteger[span];
+    for(int i = 0; i < counts.length; i++)
+        counts[i] = newTxnInteger(0);
   }
 
-  public void increment(int bin) {
-    throw new RuntimeException("Not implemented");
+  public void increment(int bin) { 
+	atomic(() -> counts[bin].increment());  
   }
 
   public int getCount(int bin) {
-    throw new RuntimeException("Not implemented");
+    return atomic(() -> counts[bin].get());
   }
 
   public int getSpan() {
-    throw new RuntimeException("Not implemented");
+    return counts.length;
   }
 
   public int[] getBins() {
-    throw new RuntimeException("Not implemented");
+    return IntStream.range(0, getSpan()).map((bin) -> getCount(bin)).toArray();
   }
 
   public int getAndClear(int bin) {
-    throw new RuntimeException("Not implemented");
+   return atomic(() ->  counts[bin].getAndSet(0) );  
   }
 
-  public void transferBins(Histogram hist) {
-    throw new RuntimeException("Not implemented");
+  public void transferBins(Histogram hist) { 
+		atomic(() ->  { for (int i = 0; i < getSpan(); i++) counts[i].increment(hist.getAndClear(i)); } );  
   }
 }
 
