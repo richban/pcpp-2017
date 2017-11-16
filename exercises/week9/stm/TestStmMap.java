@@ -246,7 +246,7 @@ class StmMap<K,V> implements OurMap<K,V> {
           final int h = getHash(k), hash = h % bs.length;
           Holder<V> holder = new Holder<V>();
           final boolean  node =  ItemNode.search(bs[hash].get(), k, holder);
-        if (holder.get() != null) { return holder.get(); }
+        if (node) { return holder.get(); }
         else { return null; } 
       });
   }
@@ -257,23 +257,30 @@ class StmMap<K,V> implements OurMap<K,V> {
 
   // Put v at key k, or update if already present.  
   public V put(K k, V v) {
-      atomic(() -> {
-          int afterSize = 0;
-          final TxnRef<ItemNode<K,V>>[] bs = buckets.get();
-          final int h = getHash(k), hash = h % bs.length;
-          final Holder<V> old = new Holder<V>();
-          final ItemNode<K,V> node = bs[hash].get(),
-                newNode = ItemNode.delete(node, k, old);
-          bs[hash] = new ItemNode<K, V>(k, v, newNode);
-          if (node == newNode) afterSize = cachedSize.set(cachedSize.get() + 1);
-      });
-      if (afterSize > bs.length) reallocateBuckets(bs);
-      return old.get();
+      //atomic(() -> {
+      //    int afterSize = 0;
+      //    final TxnRef<ItemNode<K,V>>[] bs = buckets.get();
+      //    final int h = getHash(k), hash = h % bs.length;
+      //    final Holder<V> old = new Holder<V>();
+      //    final ItemNode<K,V> node = bs[hash].get(),
+      //          newNode = ItemNode.delete(node, k, old);
+      //    bs[hash] = new ItemNode<K, V>(k, v, newNode);
+      //    if (node == newNode) afterSize = cachedSize.set(cachedSize.get() + 1);
+      //});
+      //if (afterSize > bs.length) reallocateBuckets(bs);
+      //return old.get();
+      throw new RuntimeException("Not Implemented");
   } 
 
   // Put v at key k only if absent.  
   public V putIfAbsent(K k, V v) {
-    throw new RuntimeException("Not implemented");
+      return atomic(() -> {
+          final TxnRef<ItemNode<K, V>>[] bs = buckets.get();
+          final int h = getHash(k), hash = h % bs.length;
+          Holder<V> holder = new Holder<V>();
+          if (ItemNode.search(bs[hash].get(), k, holder)) { return holder.get(); }
+          else return put(k, v);
+      });
   }
 
   // Remove and return the value at key k if any, else return null
