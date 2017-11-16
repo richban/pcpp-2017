@@ -55,7 +55,8 @@ class TestStmHistogram {
             try{ Thread.sleep(30); } catch(InterruptedException exn){}
         }
     try { stopBarrier.await(); } catch (Exception exn) { }
-    dump(histogram);
+    total.transferBins(histogram);
+    dump(histogram); 
     dump(total);
   }
 
@@ -122,7 +123,10 @@ class StmHistogram implements Histogram {
   }
 
   public void transferBins(Histogram hist) { 
-		atomic(() ->  { for (int i = 0; i < getSpan(); i++) counts[i].increment(hist.getAndClear(i)); } );  
+  for (int i = 0; i < getSpan(); i++) {
+	  final int index = i;
+	  atomic(() ->  {   counts[index].increment(hist.getAndClear(index)); } );  
+  }
   }
 }
 
