@@ -241,7 +241,14 @@ class StmMap<K,V> implements OurMap<K,V> {
 
   // Return value v associated with key k, or null
   public V get(K k) {
-    throw new RuntimeException("Not implemented");
+      return atomic(() -> {
+          final TxnRef<ItemNode<K,V>>[] bs = buckets.get();
+          final int h = getHash(k), hash = h % bs.length;
+          Holder<V> holder = new Holder<V>();
+          final boolean  node =  ItemNode.search(bs[hash].get(), k, holder);
+        if (holder.get() != null) { return holder.get(); }
+        else { return null; } 
+      });
   }
 
   public int size() {
@@ -328,4 +335,4 @@ class StmMap<K,V> implements OurMap<K,V> {
       this.value = value;
     }
   }
-}
+}   
