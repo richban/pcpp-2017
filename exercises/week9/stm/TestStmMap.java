@@ -257,19 +257,18 @@ class StmMap<K,V> implements OurMap<K,V> {
 
   // Put v at key k, or update if already present.  
   public V put(K k, V v) {
-      //atomic(() -> {
-      //    int afterSize = 0;
-      //    final TxnRef<ItemNode<K,V>>[] bs = buckets.get();
-      //    final int h = getHash(k), hash = h % bs.length;
-      //    final Holder<V> old = new Holder<V>();
-      //    final ItemNode<K,V> node = bs[hash].get(),
-      //          newNode = ItemNode.delete(node, k, old);
-      //    bs[hash] = new ItemNode<K, V>(k, v, newNode);
-      //    if (node == newNode) afterSize = cachedSize.set(cachedSize.get() + 1);
-      //});
-      //if (afterSize > bs.length) reallocateBuckets(bs);
-      //return old.get();
-      throw new RuntimeException("Not Implemented");
+      atomic(() -> {
+          int afterSize = 0;
+          final TxnRef<ItemNode<K,V>>[] bs = buckets.get();
+          final int h = getHash(k), hash = h % bs.length;
+          final Holder<V> old = new Holder<V>();
+          final ItemNode<K,V> node = bs[hash].get(),
+                newNode = ItemNode.delete(node, k, old);
+          bs[hash] = new ItemNode<K, V>(k, v, newNode);
+          if (node == newNode) afterSize = cachedSize.set(cachedSize.get() + 1);
+      });
+      if (afterSize > bs.length) reallocateBuckets(bs);
+      return old.get();
   } 
 
   // Put v at key k only if absent.  
@@ -289,6 +288,8 @@ class StmMap<K,V> implements OurMap<K,V> {
           final TxnRef<ItemNode<K, V>>[] bs = buckets.get();
           final int h = getHash(k), hash = h % bs.length;
           Holder<V> holder = new Holder<V>();
+          bs[hash] = ItemNode.delete(bs[hash].get(), k, holder);
+          cachedSize.getAndDecrement();
           return holder.get();
       });
   }
@@ -301,9 +302,8 @@ class StmMap<K,V> implements OurMap<K,V> {
   public void forEach(Consumer<K,V> consumer) {
         atomic(() -> {
           final TxnRef<ItemNode<K,V>>[] bs = buckets.get();
-          final TxnRef<ItemNode<K,V>> node;
           for (int i=0;i<bs.length;i++) {
-              node = bs[i]; 
+              final TxnRef<ItemNode<K,V>> node = bs[i]; 
             }
       });
       ItemNode<K, V> nodes = node.get();
