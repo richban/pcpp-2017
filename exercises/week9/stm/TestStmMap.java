@@ -207,8 +207,8 @@ interface OurMap<K,V> {
 
 class StmMap<K,V> implements OurMap<K,V> {
   private final TxnRef<TxnRef<ItemNode<K,V>>[]> buckets;
-  private final TxnInteger cachedSize;  
-
+  private final TxnInteger cachedSize;
+  
   public StmMap(int bucketCount) {
     final TxnRef<ItemNode<K,V>>[] buckets = makeBuckets(bucketCount);
     this.buckets = StmUtils.<TxnRef<ItemNode<K,V>>[]>newTxnRef(buckets);
@@ -252,13 +252,24 @@ class StmMap<K,V> implements OurMap<K,V> {
   }
 
   public int size() {
-    throw new RuntimeException("Not implemented");
+      return atomic(() -> cachedSize.get());
   }
 
   // Put v at key k, or update if already present.  
   public V put(K k, V v) {
-    throw new RuntimeException("Not implemented");
-  }
+      atomic(() -> {
+          int afterSize = 0;
+          final TxnRef<ItemNode<K,V>>[] bs = buckets.get();
+          final int h = getHash(k), hash = h % bs.length;
+          final Holder<V> old = new Holder<V>();
+          final ItemNode<K,V> node = bs[hash].get(),
+                newNode = ItemNode.delete(node, k, old);
+          bs[hash] = new ItemNode<K, V>(k, v, newNode);
+          if (node == newNode) afterSize = cachedSize.set(cachedSize.get() + 1);
+      });
+      if (afterSize > bs.length) reallocateBuckets(bs);
+      return old.get();
+  } 
 
   // Put v at key k only if absent.  
   public V putIfAbsent(K k, V v) {
@@ -276,7 +287,12 @@ class StmMap<K,V> implements OurMap<K,V> {
   // This is good, because calling a consumer inside an atomic seems
   // suspicious.
   public void forEach(Consumer<K,V> consumer) {
-    throw new RuntimeException("Not implemented");
+      atomic(() -> {
+          final TxnRef<ItemNode<K,V>>[] bs = buckets.get();
+          for (int i=0;i<bs.length;i++) {
+              TxnRef<ItemNode<K,V>> node = bs[i]; 
+          }
+      });
   }
 
   // public void reallocateBuckets() { 
