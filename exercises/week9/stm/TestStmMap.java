@@ -285,7 +285,12 @@ class StmMap<K,V> implements OurMap<K,V> {
 
   // Remove and return the value at key k if any, else return null
   public V remove(K k) {
-    throw new RuntimeException("Not implemented");
+      return atomic(() -> {
+          final TxnRef<ItemNode<K, V>>[] bs = buckets.get();
+          final int h = getHash(k), hash = h % bs.length;
+          Holder<V> holder = new Holder<V>();
+          return holder.get();
+      });
   }
 
   // Iterate over the hashmap's entries one bucket at a time.  Since a
@@ -294,12 +299,18 @@ class StmMap<K,V> implements OurMap<K,V> {
   // This is good, because calling a consumer inside an atomic seems
   // suspicious.
   public void forEach(Consumer<K,V> consumer) {
-      atomic(() -> {
+        atomic(() -> {
           final TxnRef<ItemNode<K,V>>[] bs = buckets.get();
+          final TxnRef<ItemNode<K,V>> node;
           for (int i=0;i<bs.length;i++) {
-              TxnRef<ItemNode<K,V>> node = bs[i]; 
-          }
+              node = bs[i]; 
+            }
       });
+      ItemNode<K, V> nodes = node.get();
+      while (nodes != null) {
+          consumer.accept(nodes.k, nodes.v);
+          nodes = nodes.next;
+      }
   }
 
   // public void reallocateBuckets() { 
