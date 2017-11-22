@@ -30,14 +30,28 @@ inside the `synchronized` block: aren't lock reentrant?___
 
 
 ## Task 5
-Aside from incrementing/decrementing ints of the counts array as described by the assignment. We chose to not compute by sum to verify the number of elements added
-by a thread. Instead we did something that results in the same, but worked better with out previous code, basically instead of computing the sum of elements added
-by a particular thread, I looped through every element in the map. For each element I would find which thread added it and decremented its counts int. At the end
-we simply need to verify that each counts int has resulted in zero. This will mean that every element from the map is related to a specific element in the counts array.
+Aside from incrementing/decrementing ints of the counts array as described by the
+assignment. We chose to not compute by sum to verify the number of elements added
+by a thread. Instead we did something that results in the same, but worked better
+with out previous code, basically instead of computing the sum of elements added
+by a particular thread, I looped through every element in the map. For each element
+I would find which thread added it and decremented its counts int. At the end we
+simply need to verify that each counts int has resulted in zero. This will mean
+that every element from the map is related to a specific element in the counts array.
 
 ## Task 6
-As the threads need to affect the counts integer of another thread on remove or put, we have that the counts array datatype of int (from Task 4) is not atomic.
-A better alternative would be to use AtomicIntegerArray which provides threadsafe atomic operation.
+As the threads need to affect the counts integer of another thread on remove or put,
+we have that the counts array datatype of int (from Task 4) is not atomic.
+A better alternative would be to use AtomicIntegerArray which provides threadsafe
+atomic operation.
+Another solution would be to keep everything local, by having a `long[]` returned
+by the `Callable` lambda expression: then it would suffice to sum such vectors at
+the end, when obtaining them by calling `get()`. This would have the advantage of
+adding no extra synchronization machinery beyond the tested class ones.
+It is still extremely difficult to make some proper tests on read operations,
+namely `get()` and `containsKey()`, because not only they leave no trace to be
+checked after all the threads have completed, but also it is not possible to
+make any assumptions on the content fo the map which is being read.
 
 # Exercise 8.2
 

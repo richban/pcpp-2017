@@ -150,7 +150,6 @@ public class TestStripedWriteMap {
     */
     assert map.size() == 1;
 
-
     /*
         putIfAbsent() on existing pair (if statement then branch)
     */
@@ -321,7 +320,7 @@ class StripedWriteMap<K,V> implements OurMap<K,V> {
   private volatile ItemNode<K,V>[] buckets;
   private final int lockCount;
   private final Object[] locks;
-  private final int[] sizes;
+  private final AtomicIntegerArray sizes;
 
   public StripedWriteMap(int bucketCount, int lockCount) {
     if (bucketCount % lockCount != 0)
@@ -329,7 +328,7 @@ class StripedWriteMap<K,V> implements OurMap<K,V> {
     this.lockCount = lockCount;
     this.buckets = makeBuckets(bucketCount);
     this.locks = new Object[lockCount];
-    this.sizes = new int[lockCount];
+    this.sizes = new AtomicIntegerArray(lockCount);
     for (int stripe=0; stripe<lockCount; stripe++)
       this.locks[stripe] = new Object();
   }
@@ -351,7 +350,7 @@ class StripedWriteMap<K,V> implements OurMap<K,V> {
     final ItemNode<K,V>[] bs = buckets;
     final int h = getHash(k), stripe = h % lockCount, hash = h % bs.length;
     // The sizes access is necessary for visibility of bs elements
-    return sizes[stripe] != 0 && ItemNode.search(bs[hash], k, null);
+    return sizes.get(stripe) != 0 && ItemNode.search(bs[hash], k, null);
   }
 
   // Return value v associated with key k, or null
@@ -362,7 +361,7 @@ class StripedWriteMap<K,V> implements OurMap<K,V> {
     // The sizes access is necessary for visibility of bs elements
 	Holder<V> holder = new Holder<V>();
 	boolean found = ItemNode.search(bs[hash], k, holder);
-    if (sizes[stripe] == 0 || !found) return null;
+    if (sizes.get(stripe) == 0 || !found) return null;
 	return holder.value;
   }
 
@@ -370,7 +369,7 @@ class StripedWriteMap<K,V> implements OurMap<K,V> {
     // TO DO: IMPLEMENT
     int count = 0;
     for (int i = 0; i < lockCount; i++)
-			count+= sizes[i];
+			count+= sizes.get(i);
 	return count;
   }
 
@@ -391,7 +390,7 @@ class StripedWriteMap<K,V> implements OurMap<K,V> {
         newNode = ItemNode.delete(node, k, old);
       bs[hash] = new ItemNode<K,V>(k, v, newNode);
       // Write for visibility; increment if k was not already in map
-      if (node == newNode) afterSize = sizes[stripe]++;
+      afterSize = sizes.addAndGet(stripe, newNode == node ? 1 : 0);
     }
     if (afterSize * lockCount > bs.length)
       reallocateBuckets(bs);
@@ -421,7 +420,7 @@ class StripedWriteMap<K,V> implements OurMap<K,V> {
 
 	  Holder<V> holder = new Holder<V>();
       buckets[hash] = ItemNode.delete(buckets[hash], k, holder);
-      sizes[stripe]--;
+      sizes.addAndGet(stripe, holder.value == null ? 0 : -1);
       return holder.value;
     }
   }
@@ -430,8 +429,8 @@ class StripedWriteMap<K,V> implements OurMap<K,V> {
   public void forEach(Consumer<K,V> consumer) {
     // TO DO: IMPLEMENT
 	ItemNode<K,V>[] bs = buckets;
-	// for (int i = 0; i < lockCount; i++)
-	// 	sizes.get(i);
+	for (int i = 0; i < lockCount; i++)
+	   sizes.get(i);
 	for (int i = 0; i < bs.length; i++)
 	{
 				ItemNode<K,V> node = bs[i];
