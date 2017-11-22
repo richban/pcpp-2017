@@ -207,8 +207,8 @@ interface OurMap<K,V> {
 
 class StmMap<K,V> implements OurMap<K,V> {
   private final TxnRef<TxnRef<ItemNode<K,V>>[]> buckets;
-  private final TxnInteger cachedSize;  
-
+  private final TxnInteger cachedSize;
+  
   public StmMap(int bucketCount) {
     final TxnRef<ItemNode<K,V>>[] buckets = makeBuckets(bucketCount);
     this.buckets = StmUtils.<TxnRef<ItemNode<K,V>>[]>newTxnRef(buckets);
@@ -241,26 +241,57 @@ class StmMap<K,V> implements OurMap<K,V> {
 
   // Return value v associated with key k, or null
   public V get(K k) {
-    throw new RuntimeException("Not implemented");
+      return atomic(() -> {
+          final TxnRef<ItemNode<K,V>>[] bs = buckets.get();
+          final int h = getHash(k), hash = h % bs.length;
+          Holder<V> holder = new Holder<V>();
+          final boolean  node =  ItemNode.search(bs[hash].get(), k, holder);
+        if (node) { return holder.get(); }
+        else { return null; } 
+      });
   }
 
   public int size() {
-    throw new RuntimeException("Not implemented");
+      return atomic(() -> cachedSize.get());
   }
 
   // Put v at key k, or update if already present.  
   public V put(K k, V v) {
-    throw new RuntimeException("Not implemented");
-  }
+      atomic(() -> {
+          int afterSize = 0;
+          final TxnRef<ItemNode<K,V>>[] bs = buckets.get();
+          final int h = getHash(k), hash = h % bs.length;
+          final Holder<V> old = new Holder<V>();
+          final ItemNode<K,V> node = bs[hash].get(),
+                newNode = ItemNode.delete(node, k, old);
+          bs[hash] = new ItemNode<K, V>(k, v, newNode);
+          if (node == newNode) afterSize = cachedSize.set(cachedSize.get() + 1);
+      });
+      if (afterSize > bs.length) reallocateBuckets(bs);
+      return old.get();
+  } 
 
   // Put v at key k only if absent.  
   public V putIfAbsent(K k, V v) {
-    throw new RuntimeException("Not implemented");
+      return atomic(() -> {
+          final TxnRef<ItemNode<K, V>>[] bs = buckets.get();
+          final int h = getHash(k), hash = h % bs.length;
+          Holder<V> holder = new Holder<V>();
+          if (ItemNode.search(bs[hash].get(), k, holder)) { return holder.get(); }
+          else return put(k, v);
+      });
   }
 
   // Remove and return the value at key k if any, else return null
   public V remove(K k) {
-    throw new RuntimeException("Not implemented");
+      return atomic(() -> {
+          final TxnRef<ItemNode<K, V>>[] bs = buckets.get();
+          final int h = getHash(k), hash = h % bs.length;
+          Holder<V> holder = new Holder<V>();
+          bs[hash] = ItemNode.delete(bs[hash].get(), k, holder);
+          cachedSize.getAndDecrement();
+          return holder.get();
+      });
   }
 
   // Iterate over the hashmap's entries one bucket at a time.  Since a
@@ -269,7 +300,17 @@ class StmMap<K,V> implements OurMap<K,V> {
   // This is good, because calling a consumer inside an atomic seems
   // suspicious.
   public void forEach(Consumer<K,V> consumer) {
-    throw new RuntimeException("Not implemented");
+        atomic(() -> {
+          final TxnRef<ItemNode<K,V>>[] bs = buckets.get();
+          for (int i=0;i<bs.length;i++) {
+              final TxnRef<ItemNode<K,V>> node = bs[i]; 
+            }
+      });
+      ItemNode<K, V> nodes = node.get();
+      while (nodes != null) {
+          consumer.accept(nodes.k, nodes.v);
+          nodes = nodes.next;
+      }
   }
 
   // public void reallocateBuckets() { 
@@ -328,4 +369,4 @@ class StmMap<K,V> implements OurMap<K,V> {
       this.value = value;
     }
   }
-}
+}   
