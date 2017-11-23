@@ -33,7 +33,7 @@ public class TestCasLocks {
   // forks (shared resources), placed between the philosophers.  A
   // philosopher alternatingly thinks and eats spaghetti.  To eat, the
   // philosopher needs exclusive use of the two forks placed to his left
-  // and right, so he tries to lock them.  
+  // and right, so he tries to lock them.
 
   // Both the places and the forks are numbered 0 to 5.  The fork to the
   // left of place p has number p, and the fork to the right has number
@@ -44,7 +44,7 @@ public class TestCasLocks {
   static class TryLockPhilosopher implements Runnable {
     private final Fork[] forks;
     private final int place;
-    
+
     public TryLockPhilosopher(Fork[] forks, int place) {
       this.forks = forks;
       this.place = place;
@@ -57,16 +57,16 @@ public class TestCasLocks {
         phil.start();
       }
     }
-      
+
     public void run() {
       while (true) {
         // Take the two forks to the left and the right
         int left = place, right = (place+1) % forks.length;
         if (forks[left].tryLock()) {
-          try { 
+          try {
             if (forks[right].tryLock()) {
-              try { 
-                System.out.print(place + " "); 
+              try {
+                System.out.print(place + " ");
               } finally { forks[right].unlock(); }
             }
           } finally { forks[left].unlock(); }
@@ -86,7 +86,7 @@ public class TestCasLocks {
   static class BadLockPhilosopher implements Runnable {
     private final Fork[] forks;
     private final int place;
-    
+
     public BadLockPhilosopher(Fork[] forks, int place) {
       this.forks = forks;
       this.place = place;
@@ -99,7 +99,7 @@ public class TestCasLocks {
         phil.start();
       }
     }
-      
+
     // Deadlock-prone version
     public void run() {
       while (true) {
@@ -112,14 +112,14 @@ public class TestCasLocks {
           System.out.print(place + " ");
         } finally {
           forks[left].unlock();
-          forks[right].unlock();          
+          forks[right].unlock();
         }
         // Think
         try { Thread.sleep(10); }
         catch (InterruptedException exn) { }
       }
     }
-    
+
     static class Fork extends SimpleLock { }
   }
 
@@ -128,7 +128,7 @@ public class TestCasLocks {
   static class GoodLockPhilosopher implements Runnable {
     private final Fork[] forks;
     private final int place;
-    
+
     public GoodLockPhilosopher(Fork[] forks, int place) {
       this.forks = forks;
       this.place = place;
@@ -141,13 +141,13 @@ public class TestCasLocks {
         phil.start();
       }
     }
-      
+
     // Deadlock-prone version
     public void run() {
       while (true) {
         // Take the two forks to the left and the right
         int left = place, right = (place+1) % forks.length;
-        int first = Math.min(left, right), 
+        int first = Math.min(left, right),
           second =  Math.max(left, right);
         try {
           forks[first].lock();
@@ -156,14 +156,14 @@ public class TestCasLocks {
           System.out.print(place + " ");
         } finally {
           forks[first].unlock();
-          forks[second].unlock();          
+          forks[second].unlock();
         }
         // Think
         try { Thread.sleep(10); }
         catch (InterruptedException exn) { }
       }
     }
-    
+
     static class Fork extends SimpleLock { }
   }
 
@@ -205,7 +205,7 @@ public class TestCasLocks {
     {
       final SimpleTryLock lock = new SimpleTryLock();
       Mark6("Untaken SimpleTryLock", (int i) -> {
-	  try { 
+	  try {
 	    lock.tryLock();
 	    return i;
 	  } finally {
@@ -216,7 +216,7 @@ public class TestCasLocks {
     {
       final SimpleLock lock = new SimpleLock();
       Mark6("Untaken SimpleLock", (int i) -> {
-	  try { 
+	  try {
 	    lock.lock();
 	    return i;
 	  } finally {
@@ -227,7 +227,7 @@ public class TestCasLocks {
     {
       final ReentrantTryLock lock = new ReentrantTryLock();
       Mark6("Untaken ReentrantTryLock", (int i) -> {
-	  try { 
+	  try {
 	    lock.tryLock();
 	    return i;
 	  } finally {
@@ -238,7 +238,7 @@ public class TestCasLocks {
     {
       final MyReentrantLock lock = new MyReentrantLock();
       Mark6("Untaken MyReentrantLock", (int i) -> {
-	  try { 
+	  try {
 	    lock.lock();
 	    return i;
 	  } finally {
@@ -249,7 +249,7 @@ public class TestCasLocks {
     {
       final ReentrantLock lock = new ReentrantLock();
       Mark6("Untaken ReentrantLock", (int i) -> {
-	  try { 
+	  try {
 	    lock.lock();
 	    return i;
 	  } finally {
@@ -258,22 +258,22 @@ public class TestCasLocks {
 	});
     }
   }
-  
+
   // --- Benchmarking infrastructure ---
 
   public static double Mark6(String msg, IntToDoubleFunction f) {
     int n = 10, count = 1, totalCount = 0;
     double dummy = 0.0, runningTime = 0.0, st = 0.0, sst = 0.0;
-    do { 
+    do {
       count *= 2;
       st = sst = 0.0;
       for (int j=0; j<n; j++) {
         Timer t = new Timer();
-        for (int i=0; i<count; i++) 
+        for (int i=0; i<count; i++)
           dummy += f.applyAsDouble(i);
         runningTime = t.check();
         double time = runningTime * 1e9 / count;
-        st += time; 
+        st += time;
         sst += time * time;
         totalCount += count;
       }
@@ -286,16 +286,16 @@ public class TestCasLocks {
   public static double Mark7(String msg, IntToDoubleFunction f) {
     int n = 10, count = 1, totalCount = 0;
     double dummy = 0.0, runningTime = 0.0, st = 0.0, sst = 0.0;
-    do { 
+    do {
       count *= 2;
       st = sst = 0.0;
       for (int j=0; j<n; j++) {
         Timer t = new Timer();
-        for (int i=0; i<count; i++) 
+        for (int i=0; i<count; i++)
           dummy += f.applyAsDouble(i);
         runningTime = t.check();
         double time = runningTime * 1e9 / count;
-        st += time; 
+        st += time;
         sst += time * time;
         totalCount += count;
       }
@@ -306,19 +306,19 @@ public class TestCasLocks {
   }
 
   public static void SystemInfo() {
-    System.out.printf("# OS:   %s; %s; %s%n", 
-                      System.getProperty("os.name"), 
-                      System.getProperty("os.version"), 
+    System.out.printf("# OS:   %s; %s; %s%n",
+                      System.getProperty("os.name"),
+                      System.getProperty("os.version"),
                       System.getProperty("os.arch"));
-    System.out.printf("# JVM:  %s; %s%n", 
-                      System.getProperty("java.vendor"), 
+    System.out.printf("# JVM:  %s; %s%n",
+                      System.getProperty("java.vendor"),
                       System.getProperty("java.version"));
     // The processor identifier works only on MS Windows:
-    System.out.printf("# CPU:  %s; %d \"cores\"%n", 
+    System.out.printf("# CPU:  %s; %d \"cores\"%n",
 		      System.getenv("PROCESSOR_IDENTIFIER"),
 		      Runtime.getRuntime().availableProcessors());
     java.util.Date now = new java.util.Date();
-    System.out.printf("# Date: %s%n", 
+    System.out.printf("# Date: %s%n",
       new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(now));
   }
 }
@@ -357,7 +357,7 @@ class SimpleTryLock {
   // current, or back, where current is the current thread's object.
   public void unlockVariant() {
     final Thread current = Thread.currentThread();
-    if (holder.get() == current) 
+    if (holder.get() == current)
       holder.set(null);
     else
       throw new RuntimeException("Not lock holder");
@@ -384,10 +384,10 @@ class ReentrantTryLock {
     if (holder.get() == current) {    // already held by this thread
       holdCount++;
       return true;
-    } else if (holder.compareAndSet(null, current)) {        
+    } else if (holder.compareAndSet(null, current)) {
       holdCount = 1;    // was unheld and we got it
       return true;
-    } 
+    }
     return false;       // already held, or just grabbed, by other thread
   }
 
@@ -395,7 +395,7 @@ class ReentrantTryLock {
     final Thread current = Thread.currentThread();
     if (holder.get() == current) {
       holdCount--;
-      if (holdCount == 0) 
+      if (holdCount == 0)
 	holder.compareAndSet(current, null);
       return;
     }
@@ -416,7 +416,7 @@ class SimpleLock {
   private final AtomicReference<Thread> holder = new AtomicReference<Thread>();
   // The FIFO queue of threads waiting for this lock
   private final Queue<Thread> waiters = new ConcurrentLinkedQueue<Thread>();
-  
+
   public void lock() {
     final Thread current = Thread.currentThread();
     boolean wasInterrupted = false;
@@ -431,10 +431,10 @@ class SimpleLock {
     if (wasInterrupted)                // reassert interrupt on exit
       current.interrupt();
   }
-  
+
   public void unlock() {
     final Thread current = Thread.currentThread();
-    if (holder.compareAndSet(current, null)) 
+    if (holder.compareAndSet(current, null))
       LockSupport.unpark(waiters.peek()); // null arg has no effect
     else
       throw new RuntimeException("Not lock holder");
@@ -456,12 +456,12 @@ class MyReentrantLock {
   private final Queue<Thread> waiters = new ConcurrentLinkedQueue<Thread>();
   // Valid only if holder != null
   private volatile int holdCount = 0;
-  
+
   public void lock() {
     final Thread current = Thread.currentThread();
-    if (holder.get() == current) 
+    if (holder.get() == current)
       holdCount++;
-    else {   
+    else {
       boolean wasInterrupted = false;
       waiters.add(current);
       // Block while not first in queue or cannot acquire lock
@@ -476,7 +476,7 @@ class MyReentrantLock {
         current.interrupt();
     }
   }
-    
+
   public void unlock() {
     final Thread current = Thread.currentThread();
     if (holder.get() == current) {
@@ -488,4 +488,12 @@ class MyReentrantLock {
     }
     throw new RuntimeException("Not lock holder");
   }
+}
+
+class Timer {
+  private long start, spent = 0;
+  public Timer() { play(); }
+  public double check() { return (System.nanoTime()-start+spent); }
+  public void pause() { spent += System.nanoTime()-start; }
+  public void play() { start = System.nanoTime(); }
 }
