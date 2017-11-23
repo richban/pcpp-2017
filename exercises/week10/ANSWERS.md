@@ -4,6 +4,12 @@ Group: 23
 *Name 2:* Davide Laezza (dlae@itu.dk)
 *Name 3:* Richard Banyi (riba@itu.dk)
 
+# Exercise 10.1
+
+## Task 1
+
+    See source code CasHistogram.java
+
 # Exercise 10.2
 
 ## Task 1-6
