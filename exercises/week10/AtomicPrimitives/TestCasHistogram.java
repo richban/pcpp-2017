@@ -5,13 +5,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CyclicBarrier;
 import java.util.stream.IntStream;
 
+// For the Multiverse library:
+import org.multiverse.api.references.*;
+import static org.multiverse.api.StmUtils.*;
+
+
 public class TestCasHistogram {
   public static void main(String[] args) {
     
-    Histogram h = new CasHistogram(30);  
+    Histogram c = new CasHistogram(30);  
+    countPrimeFactorsWithStmHistogram(c);
+    
+    Histogram h = new StmHistogram(30);
     countPrimeFactorsWithStmHistogram(h);
 
-    Histogram h2 = new CasHistogram(30);
+    Histogram c2 = new CasHistogram(30);
+    countPrimeFactorsWithStmHistogram(c2);
+
+    Histogram h2 = new StmHistogram(30);
     countPrimeFactorsWithStmHistogram(h2);
   }
 
@@ -31,19 +42,22 @@ public class TestCasHistogram {
 	      try { startBarrier.await(); } catch (Exception exn) { }
 	      for (int p=from; p<to; p++) 
 		histogram.increment(countFactors(p));
-	      System.out.print("*");
+	      // System.out.print("*");
 	      try { stopBarrier.await(); } catch (Exception exn) { }
 	    });
         threads[t].start();
     }
     try { startBarrier.await(); } catch (Exception exn) { }
-	// for(int i = 0; i < 200; i++){
+	Timer start = new Timer();
+    // for(int i = 0; i < 200; i++){
     //        total.transferBins(histogram);
     //        try{ Thread.sleep(30); } catch(InterruptedException exn){}
     //    }
     try { stopBarrier.await(); } catch (Exception exn) { }
+    double stop = start.check();
+    System.out.println(histogram.getClass() + "-->" + stop);
     // total.transferBins(histogram);
-    dump(histogram); 
+    // dump(histogram); 
     // dump(total);
   }
 
@@ -131,4 +145,50 @@ class CasHistogram implements Histogram {
             } while (!bins[i].compareAndSet(oldValue, newValue));
         }
     }
+}
+
+
+class StmHistogram implements Histogram {
+  private final TxnInteger[] counts;
+
+  public StmHistogram(int span) {
+    counts = new TxnInteger[span];
+    for(int i = 0; i < counts.length; i++)
+        counts[i] = newTxnInteger(0);
+  }
+
+  public void increment(int bin) { 
+	atomic(() -> counts[bin].increment());  
+  }
+
+  public int getCount(int bin) {
+    return atomic(() -> counts[bin].get());
+  }
+
+  public int getSpan() {
+    return counts.length;
+  }
+
+  public int[] getBins() {
+    return IntStream.range(0, getSpan()).map((bin) -> getCount(bin)).toArray();
+  }
+
+  public int getAndClear(int bin) {
+   return atomic(() ->  counts[bin].getAndSet(0) );  
+  }
+
+  public void transferBins(Histogram hist) { 
+  for (int i = 0; i < getSpan(); i++) {
+	  final int index = i;
+	  atomic(() ->  {   counts[index].increment(hist.getAndClear(index)); } );  
+  }
+  }
+}
+
+class Timer {
+    private long start, spent = 0;
+    public Timer() { }
+    public double check() { return (System.nanoTime()-start+spent)/1e9; }
+    public void pause() { spent += System.nanoTime()-start; }
+    public void play() { start = System.nanoTime(); }
 }
