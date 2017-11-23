@@ -27,8 +27,6 @@ public class TestCasHistogram {
   }
 
   private static void countPrimeFactorsWithStmHistogram(Histogram histogram) {
-    // final Histogram histogram = new StmHistogram(30);
-    // final Histogram total = new StmHistogram(30);
     final int range = 4_000_000;
     final int threadCount = 10, perThread = range / threadCount;
     final CyclicBarrier startBarrier = new CyclicBarrier(threadCount + 1), 
@@ -42,23 +40,19 @@ public class TestCasHistogram {
 	      try { startBarrier.await(); } catch (Exception exn) { }
 	      for (int p=from; p<to; p++) 
 		histogram.increment(countFactors(p));
-	      // System.out.print("*");
+	      System.out.print("*");
 	      try { stopBarrier.await(); } catch (Exception exn) { }
 	    });
         threads[t].start();
     }
     try { startBarrier.await(); } catch (Exception exn) { }
-	Timer start = new Timer();
-    // for(int i = 0; i < 200; i++){
-    //        total.transferBins(histogram);
-    //        try{ Thread.sleep(30); } catch(InterruptedException exn){}
-    //    }
+	
+    Timer start = new Timer();
     try { stopBarrier.await(); } catch (Exception exn) { }
     double stop = start.check();
+    
     System.out.println(histogram.getClass() + "-->" + stop);
-    // total.transferBins(histogram);
-    // dump(histogram); 
-    // dump(total);
+    dump(histogram); 
   }
 
   public static void dump(Histogram histogram) {
