@@ -23,19 +23,19 @@ public class TestPseudoRandom {
   }
 
   private static void timeMyRandom(final MyRandom random, final int threadCount) {
-    final int totalCount = 1_000_000, 
+    final int totalCount = 1_000_000,
       count = (int)(0.5 + (double)totalCount / (double)threadCount);
     Mark7(String.format("%-16s %3d", random.getClass().toString().substring(6), threadCount),
-      (int i) -> { 
-        final CyclicBarrier startBarrier = new CyclicBarrier(threadCount + 1), 
+      (int i) -> {
+        final CyclicBarrier startBarrier = new CyclicBarrier(threadCount + 1),
           stopBarrier = startBarrier;
         for (int t=0; t<threadCount; t++) {
-          new Thread(() -> { 
+          new Thread(() -> {
 	      try { startBarrier.await(); } catch (Exception exn) { }
 	      int result = 0;
-	      for (int p=0; p<count; p++) 
+	      for (int p=0; p<count; p++)
 		result += random.nextInt();
-	      try { stopBarrier.await(); } catch (Exception exn) { }      
+	      try { stopBarrier.await(); } catch (Exception exn) { }
 	  }).start();
         }
         try { startBarrier.await(); } catch (Exception exn) { }
@@ -45,35 +45,35 @@ public class TestPseudoRandom {
   }
 
   public static void SystemInfo() {
-    System.out.printf("# OS:   %s; %s; %s%n", 
-                      System.getProperty("os.name"), 
-                      System.getProperty("os.version"), 
+    System.out.printf("# OS:   %s; %s; %s%n",
+                      System.getProperty("os.name"),
+                      System.getProperty("os.version"),
                       System.getProperty("os.arch"));
-    System.out.printf("# JVM:  %s; %s%n", 
-                      System.getProperty("java.vendor"), 
+    System.out.printf("# JVM:  %s; %s%n",
+                      System.getProperty("java.vendor"),
                       System.getProperty("java.version"));
     // The processor identifier works only on MS Windows:
-    System.out.printf("# CPU:  %s; %d \"cores\"%n", 
+    System.out.printf("# CPU:  %s; %d \"cores\"%n",
 		      System.getenv("PROCESSOR_IDENTIFIER"),
 		      Runtime.getRuntime().availableProcessors());
     java.util.Date now = new java.util.Date();
-    System.out.printf("# Date: %s%n", 
+    System.out.printf("# Date: %s%n",
       new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(now));
   }
 
   public static double Mark7(String msg, IntToDoubleFunction f) {
     int n = 10, count = 1, totalCount = 0;
     double dummy = 0.0, runningTime = 0.0, st = 0.0, sst = 0.0;
-    do { 
+    do {
       count *= 2;
       st = sst = 0.0;
       for (int j=0; j<n; j++) {
         Timer t = new Timer();
-        for (int i=0; i<count; i++) 
+        for (int i=0; i<count; i++)
           dummy += f.applyAsDouble(i);
         runningTime = t.check();
         double time = runningTime * 1e6 / count;
-        st += time; 
+        st += time;
         sst += time * time;
         totalCount += count;
       }
@@ -89,7 +89,7 @@ interface MyRandom {
 }
 
 class LockingRandom implements MyRandom {
-  private long seed; 
+  private long seed;
 
   public LockingRandom(long seed) {
     this.seed = seed;
@@ -124,8 +124,8 @@ class TLLockingRandom implements MyRandom {
   private final ThreadLocal<MyRandom> myRandomGenerator;
 
   public TLLockingRandom(final long seed) {
-    this.myRandomGenerator = 
-      new ThreadLocal<MyRandom>() { public MyRandom initialValue() { 
+    this.myRandomGenerator =
+      new ThreadLocal<MyRandom>() { public MyRandom initialValue() {
         return new LockingRandom(seed);
       }};
   }
@@ -139,8 +139,8 @@ class TLCasRandom implements MyRandom {
   private final ThreadLocal<MyRandom> myRandomGenerator;
 
   public TLCasRandom(final long seed) {
-    this.myRandomGenerator = 
-      new ThreadLocal<MyRandom>() { public MyRandom initialValue() { 
+    this.myRandomGenerator =
+      new ThreadLocal<MyRandom>() { public MyRandom initialValue() {
         return new CasRandom(seed);
       }};
   }
@@ -152,6 +152,14 @@ class TLCasRandom implements MyRandom {
 
 class WrappedTLRandom implements MyRandom {
   public int nextInt() {
-    return ThreadLocalRandom.current().nextInt();    
+    return ThreadLocalRandom.current().nextInt();
   }
+}
+
+class Timer {
+  private long start, spent = 0;
+  public Timer() { play(); }
+  public double check() { return (System.nanoTime()-start+spent); }
+  public void pause() { spent += System.nanoTime()-start; }
+  public void play() { start = System.nanoTime(); }
 }
