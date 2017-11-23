@@ -54,17 +54,19 @@ class StmHistogram-->50009.756693932
 
 # Exercise 10.2
 
-## Task 1-6
+## Task 1-5
 	See source code Exercise10.2.java
 
-## Task 7
+## Task 6
 	See source code Exercise10.2.java, testing code based on week8->TestStripedWriteMap.java->parallelTest.
 
-## Task 8
+## Task 7
 	** Explain why such a solution would work in this particular case, even if the test-then-set sequence is not atomic.
-	The Holders object is an immutable linked list datastructure. The object where contains is called therefore won't change and
-	it will therefore work to simply use contains in the given context of this assignment.
-	** DAVIDE I DONT UNDERSTAND,,, USE YOUR DIVINE KNOWLEDGE
+	The Holders object is an immutable linked list datastructure. The object of which the method "contains" is called won't change and
+	therefore ensures that once we attempt to iterate the ReaderList, no item can ever be skipped and if a thread has acquired a readerlock then
+	it definitely must exists within the ReaderList. The reason for this is that by semantics, a ReaderList object containing the thread can only be
+	removed by the owner/same thread. The reason that test-and-set need not be atomic is that a given thread can only add itself and thus only after a given
+	thread has added itself to the ReaderList (must be atomic) after checking the contains condition will the result of "contains" become true.
 
 ## Exercise 10.3
 The test compares different versions of concurrent random integer generators,
