@@ -125,6 +125,24 @@ from tests on a 16-cores CPU
 | TLCasRandom     |    15    | 8311587 s   |    517294     |
 | WrappedTLRandom |    15    | 4810916 s   |    487412     |
 
+| LockingRandom   |    16    | 53427157 s  |    272477     |
+| CasRandom       |    16    | 149766289 s |    6632706    |
+| TLLockingRandom |    16    | 3752512 s   |    432722     |
+| TLCasRandom     |    16    | 4026952 s   |    399788     |
+| WrappedTLRandom |    16    | 2523123 s   |    251227     |
+
+| LockingRandom   |    24    | 54833932 s  |    713824     |
+| CasRandom       |    24    | 183167552 s |    10135858   |
+| TLLockingRandom |    24    | 3921562 s   |    386372     |
+| TLCasRandom     |    24    | 4229818 s   |    352897     |
+| WrappedTLRandom |    24    | 2660956 s   |    307790     |
+
+| LockingRandom   |    32    | 55909929 s  |    733466     |
+| CasRandom       |    32    | 169175168 s |    2965232    |
+| TLLockingRandom |    32    | 4299468 s   |    236862     |
+| TLCasRandom     |    32    | 4530463 s   |    275494     |
+| WrappedTLRandom |    32    | 2883834 s   |    288608     |
+
 `LockingRandom` performs much faster in the single-thread situation, when
 no actual concurrency is happening, its execution times increasing
 significantly as soon as more than one thread is involved and stabilizing
