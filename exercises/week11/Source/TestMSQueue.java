@@ -36,11 +36,15 @@ public class TestMSQueue extends Tests{
   }
 
   private static void parallelTest(UnboundedQueue<Integer> bq) throws Exception {
+	  long startTime = System.currentTimeMillis();
     System.out.printf("%nParallel test: %s", bq.getClass()); 
     final ExecutorService pool = Executors.newCachedThreadPool();
     new PutTakeTest(bq, 17, 100000).test(pool); 
     pool.shutdown();
-    System.out.println("... passed");      
+    System.out.println("... passed");     
+long endTime   = System.currentTimeMillis();
+long totalTime = endTime - startTime;
+System.out.println(totalTime);	
   }
 }
 
