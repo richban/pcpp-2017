@@ -124,7 +124,8 @@ class MSQueue<T> implements UnboundedQueue<T> {
   }
 
   public void enqueue(T item) { // at tail
-    Node<T> node = new Node<T>(item, null); 
+    Node<T> node = new Node<T>(item, null);
+    while (true) {
       Node<T> last = tail.get(), next = last.next.get();
       if (last == tail.get()) {         // E7
         if (next == null)  {
@@ -137,7 +138,8 @@ class MSQueue<T> implements UnboundedQueue<T> {
         } else 
           // Queue in intermediate state, advance tail
           tail.compareAndSet(last, next);
-      } 
+      }
+    }
   }
 
   public T dequeue() { // from head
