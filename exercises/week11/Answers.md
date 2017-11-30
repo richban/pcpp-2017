@@ -39,7 +39,8 @@ The tests still passes.
 ## Task 4
 If the checks at lines E7 and D5 are indeed unnecessary for correctness, what other reasons could there be
 to include them in the code? How would you test your hypotheses about such reasons?
-Performance? Davide?
+
+I don't know.
 
 ## Task 5
 Describe and conduct an experiment to cast some light on the role of one of E7 and D5.
