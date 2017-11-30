@@ -39,7 +39,12 @@ The tests still passes.
 ## Task 4
 If the checks at lines E7 and D5 are indeed unnecessary for correctness, what other reasons could there be
 to include them in the code? How would you test your hypotheses about such reasons?
-Performance? Davide?
+
+I don't know.
+
+We need to capture the values of two variables at the same time (head and tail). This is problematic as we need to
+read head followed by a read of tail. Without D5, it is possible that we might proceed with a head that didn't exist at the same time as we read the tail.
+The issue is then if we hit (as tail.compareAndSet(last, next); which then 
 
 ## Task 5
 Describe and conduct an experiment to cast some light on the role of one of E7 and D5.
