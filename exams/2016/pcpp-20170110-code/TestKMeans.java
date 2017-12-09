@@ -21,6 +21,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
 
 public class TestKMeans {
   public static void main(String[] args) {
@@ -28,7 +29,7 @@ public class TestKMeans {
     final int n = 200_000, k = 81;
     final Point[] points = GenerateData.randomPoints(n);
     final int[] initialPoints = GenerateData.randomIndexes(n, k);
-    for (int i=0; i<3; i++) {
+    for (int i=0; i<1; i++) {
       //timeKMeans(new KMeans1(points, k), initialPoints);
       timeKMeans(new KMeans1P(points, k), initialPoints);
       // timeKMeans(new KMeans2(points, k), initialPoints);
@@ -146,11 +147,12 @@ class KMeans1P implements KMeans {
     private final int task_count = 8;
     private final int perTask = 25_000;
     final LongCounter lc = new LongCounter();
+    private int iterations;
     List<Callable<Void>> tasks = new ArrayList<Callable<Void>>();
-    List<Callable<Cluster>> cluster_tasks = new ArrayList<Callable<Cluster>>();
+
 
     private static final ExecutorService executor
-      = Executors.newCachedThreadPool();
+      = Executors.newWorkStealingPool();
 
     public KMeans1P(Point[] points, int k) {
         this.points = Arrays.asList(points);
@@ -158,19 +160,20 @@ class KMeans1P implements KMeans {
     }
 
     public void findClusters(int[] initialPoints){
-        clusters = GenerateData.initialClusters(points.toArray(new Point[0]), initialPoints,
+        Cluster[] clusters = GenerateData.initialClusters(points.toArray(new Point[points.size()]), initialPoints,
                 Cluster::new, Cluster[]::new);
-        boolean converged = false;
-        while(!converged) {
-            lc.increment();
+        AtomicBoolean converged = new AtomicBoolean(false);
+        while(!converged.get()) {
+            iterations++;
             { // Assignment step
               for (int t=0;t<task_count;t++) {
+                  final Cluster[] clusterRef = clusters;
                   final int from = perTask * t,
                         to = (t+1 == task_count) ? points.size() : perTask * (t+1);
                   tasks.add(() -> {
                       for (Point p : points.subList(from, to)) {
                           Cluster best = null;
-                          for (Cluster c : clusters)
+                          for (Cluster c : clusterRef)
                               if (best == null || p.sqrDist(c.mean) <
                                       p.sqrDist(best.mean))
                                   best = c;
@@ -181,39 +184,55 @@ class KMeans1P implements KMeans {
                   try {
                       executor.invokeAll(tasks);
                   } catch (InterruptedException ext) {
-                      System.out.println("Interrupted: " + ext);
+                      System.out.println("Interrupted Assignment: " + ext);
                   }
               }
             }
             { // Update step
-              for (int t=0;t<k;t++) {
-                  cluster_tasks.add(() -> {
-                    converged = true;
-                    Point mean = clusters[k].computeMean();
-                    if (!clusters[k].mean.almostEquals(mean))
-                      converged = false;
-                    if (mean != null)
-                      return new Cluster(mean);
-                    else
-                      System.out.printf("===> Empty cluster at %s%n",
-                        clusters[k].mean);
-                      return null;
-                  });
-                  try {
-                      executor.invokeAll(cluster_tasks);
-                  } catch (InterruptedException ext) {
-                      System.out.println("Interrupted: " + ext);
+              List<Callable<Cluster>> cluster_tasks = new ArrayList<Callable<Cluster>>();
+              converged.set(true);
+              for (Cluster c : clusters){
+                cluster_tasks.add(() -> {
+                  Point mean = c.computeMean();
+                  if (!c.mean.almostEquals(mean))
+                    converged.set(false);
+                  if (mean != null) {
+                    return new Cluster(mean);
                   }
+                  else {
+                    System.out.printf("===> Empty cluster at %s%n",
+                      c.mean);
+                    return null;
+                  }
+                });
               }
-            }
-            //this.clusters = cluster_task.get().to;
+
+              try {
+                  List<Future<Cluster>> futures = executor.invokeAll(cluster_tasks);
+                  clusters = futures.stream().map(f -> checkCall(f))
+                                    .filter(p -> p != null)
+                                    .toArray(Cluster[]::new);
+              } catch (InterruptedException ext) {
+                  System.out.println("InterruptedException: " + ext);
+              } catch (Exception ext) {
+                System.out.println("Exception -> " + ext);
+              }
+          }
+            this.clusters = clusters;
         }
+    }
+
+    public static <T> T checkCall(Future<T> fut) {
+      try { return fut.get(); }
+      catch (ExecutionException e) { throw new RuntimeException(e); }
+      catch (RuntimeException e) { throw e; }
+      catch (InterruptedException e) { throw new RuntimeException(e); }
     }
 
     public void print() {
       for (Cluster c : clusters)
         System.out.println(c);
-      System.out.printf("Used %d iterations%n", lc.get());
+      System.out.printf("Used %d iterations%n", iterations);
     }
 
     static class Cluster extends ClusterBase {
@@ -229,11 +248,11 @@ class KMeans1P implements KMeans {
         return mean;
       }
 
-      public void add(Point p) {
+      public synchronized void add(Point p) {
         points.add(p);
       }
 
-      public Point computeMean() {
+      public synchronized Point computeMean() {
         double sumx = 0.0, sumy = 0.0;
         for (Point p : points) {
           sumx += p.x;
