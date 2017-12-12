@@ -5,20 +5,75 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntToDoubleFunction;
+
 
 public class ConcurrentStack {
   public static void main(String[] args) {
-    System.out.printf("STACK");
-    seqTest(new ConcurrentStackImp<Integer>());
-    parallelTest(new ConcurrentStackImp<Integer>());
+    // System.out.printf("STACK");
+    //System.out.println();
+    // seqTest(new ConcurrentStackImp<Integer>());
+    // parallelTest(new ConcurrentStackImp<Integer>());
+    // timeAllMaps();
+    seqStripedTest(new StripedStack<Integer>(32));
   }
 
+  private static void timeAllMaps() {
+  final int bucketCount = 100_000, lockCount = 32;
+  for (int t=1; t<=32; t++) {
+    final int threadCount = t;
+    Mark7(String.format("%-21s %d", "STACK", threadCount),
+          i -> timeMap(threadCount, new ConcurrentStackImp<Integer>()));
+    }
+  }
+
+  private static double timeMap(int threadCount, final ConcurrentStackImp<Integer> stack) {
+    final int iterations = 5_000_000, perThread = iterations / threadCount;
+    final int range = 200_000;
+    return exerciseMap(threadCount, perThread, range, stack);
+  }
+
+  // TO BE HANDED OUT
+private static double exerciseMap(int threadCount, int perThread, int range,
+                                  final ConcurrentStackImp<Integer> stack) {
+  Thread[] threads = new Thread[threadCount];
+  for (int t=0; t<threadCount; t++) {
+    final int myThread = t;
+    threads[t] = new Thread(() -> {
+      Random random = new Random(37 * myThread + 78);
+      for (int i=0; i<perThread; i++) {
+        Integer item = random.nextInt(range);
+        if (random.nextDouble() < 0.60) {
+          stack.push(item);
+        }
+        else
+          if (random.nextDouble() < 0.02) {
+            stack.pop();
+          }
+      }
+    });
+  }
+  for (int t=0; t<threadCount; t++)
+    threads[t].start();
+  try {
+    for (int t=0; t<threadCount; t++)
+      threads[t].join();
+  } catch (InterruptedException exn) { }
+  return stack.size();
+}
+
   private static void parallelTest(final ConcurrentStackImp<Integer> stack) {
+    Timer t = new Timer();
+    int trials = 10_000;
+    int npairs = 10;
+    int threadCount = npairs * 2 + 1;
     System.out.printf("%nParallel test: %s", stack.getClass());
     final ExecutorService pool = Executors.newCachedThreadPool();
-    new PushPopTest(stack, 10, 10).test(pool);
+    new PushPopTest(stack, npairs, trials).test(pool);
     pool.shutdown();
+    double time = t.check() * 1e6;
     System.out.println("... passed");
+    System.out.printf("time = %10.2f us; threadCount = %d\n", time, threadCount);
   }
 
   private static void seqTest(final ConcurrentStackImp<Integer> stack) {
@@ -31,8 +86,56 @@ public class ConcurrentStack {
     assert stack.pop() == 2;
     assert stack.pop() == 1;
     assert stack.pop() == null;
-
   }
+
+  private static void seqStripedTest(final StripedStack<Integer> stack) {
+    System.out.printf("Sequential test for StipedStac %n%s%n", stack.getClass());
+    System.out.printf("Size: %d", stack.size());
+    System.out.println();
+    stack.push(10);
+  }
+
+  // NB: Modified to show microseconds instead of nanoseconds
+
+public static double Mark7(String msg, IntToDoubleFunction f) {
+  int n = 10, count = 1, totalCount = 0;
+  double dummy = 0.0, runningTime = 0.0, st = 0.0, sst = 0.0;
+  do {
+    count *= 2;
+    st = sst = 0.0;
+    for (int j=0; j<n; j++) {
+      Timer t = new Timer();
+      for (int i=0; i<count; i++)
+        dummy += f.applyAsDouble(i);
+      runningTime = t.check();
+      double time = runningTime * 1e6 / count; // microseconds
+      st += time;
+      sst += time * time;
+      totalCount += count;
+    }
+  } while (runningTime < 0.25 && count < Integer.MAX_VALUE/2);
+  double mean = st/n, sdev = Math.sqrt((sst - mean*mean*n)/(n-1));
+  System.out.printf("%-25s %15.1f us %10.2f %10d%n", msg, mean, sdev, count);
+  return dummy / totalCount;
+}
+
+public static void SystemInfo() {
+  System.out.printf("# OS:   %s; %s; %s%n",
+                    System.getProperty("os.name"),
+                    System.getProperty("os.version"),
+                    System.getProperty("os.arch"));
+  System.out.printf("# JVM:  %s; %s%n",
+                    System.getProperty("java.vendor"),
+                    System.getProperty("java.version"));
+  // The processor identifier works only on MS Windows:
+  System.out.printf("# CPU:  %s; %d \"cores\"%n",
+                    System.getenv("PROCESSOR_IDENTIFIER"),
+                    Runtime.getRuntime().availableProcessors());
+  java.util.Date now = new java.util.Date();
+  System.out.printf("# Date: %s%n",
+    new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(now));
+}
+
 }
 
 class Tests {
@@ -87,11 +190,9 @@ class PushPopTest extends Tests {
           int item = random.nextInt();
           stack.push(item);
           sum += item;
-          System.out.printf("%nSize Produced: %s", stack.size());
         }
         putSum.getAndAdd(sum);
         stopBarrier.await();
-        System.out.printf("%nSize Produced: %s", stack.size());
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -101,12 +202,12 @@ class PushPopTest extends Tests {
   class Consumer implements Runnable {
     public void run() {
       try {
-        System.out.printf("%nSize to Consume: %s", stack.size());
         startBarrier.await();
         int sum = 0;
         for (int i = nTrials; i > 0; --i) {
-          sum += stack.pop();
-          System.out.printf("%nSize Consumed: %s", stack.size());
+          Integer item = null;
+          while (item == null) { item = stack.pop(); }
+          sum += item;
         }
         takeSum.getAndAdd(sum);
         stopBarrier.await();
@@ -149,4 +250,50 @@ class ConcurrentStackImp<E> implements ConcurrentStackList<E> {
   public boolean isEmpty() {
     return stack.isEmpty();
   }
+}
+
+class StripedStack<E> {
+  ConcurrentStackImp<E>[] buckets;
+
+  public StripedStack(int bucketCount) {
+    this.buckets = makeBuckets(bucketCount);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <E> ConcurrentStackImp<E>[] makeBuckets(int size) {
+  // Java's @$#@?!! type system requires this unsafe cast
+    return (ConcurrentStackImp<E>[])new ConcurrentStackImp[size];
+  }
+
+  // Protect against poor hash functions and make non-negative
+  private static int getHash(Thread t) {
+    final int th = t.hashCode();
+    System.out.printf("th: %d\n", th);
+    return (th ^ (th >>> 16)) & 0x7FFFFFFF;
+  }
+
+  public void push(E e) {
+    Thread thread = Thread.currentThread();
+    final int h = getHash(thread), hash = h % buckets.length;
+    System.out.printf("hash: %d\n", hash);
+    buckets[hash].push(e);
+  }
+
+  public int size() {
+    int count = 0;
+    for (int i = 0; i < buckets.length; i++) {
+      buckets[i].push(i);
+      count++;
+    }
+    return count;
+  }
+
+}
+
+class Timer {
+  private long start, spent = 0;
+  public Timer() { play(); }
+  public double check() { return (System.nanoTime()-start+spent); }
+  public void pause() { spent += System.nanoTime()-start; }
+  public void play() { start = System.nanoTime(); }
 }
