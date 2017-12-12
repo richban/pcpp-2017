@@ -10,12 +10,12 @@ import java.util.function.IntToDoubleFunction;
 
 public class ConcurrentStack {
   public static void main(String[] args) {
-    // System.out.printf("STACK");
-    //System.out.println();
-    // seqTest(new ConcurrentStackImp<Integer>());
-    // parallelTest(new ConcurrentStackImp<Integer>());
+    System.out.printf("STACK");
+    System.out.println();
+    seqTest(new ConcurrentStackImp());
+    parallelTest(new ConcurrentStackImp());
     // timeAllMaps();
-    seqStripedTest(new StripedStack<Integer>(32));
+    //seqStripedTest(new StripedStack(32));
   }
 
   private static void timeAllMaps() {
@@ -23,11 +23,11 @@ public class ConcurrentStack {
   for (int t=1; t<=32; t++) {
     final int threadCount = t;
     Mark7(String.format("%-21s %d", "STACK", threadCount),
-          i -> timeMap(threadCount, new ConcurrentStackImp<Integer>()));
+          i -> timeMap(threadCount, new ConcurrentStackImp()));
     }
   }
 
-  private static double timeMap(int threadCount, final ConcurrentStackImp<Integer> stack) {
+  private static double timeMap(int threadCount, final ConcurrentStackImp stack) {
     final int iterations = 5_000_000, perThread = iterations / threadCount;
     final int range = 200_000;
     return exerciseMap(threadCount, perThread, range, stack);
@@ -35,7 +35,7 @@ public class ConcurrentStack {
 
   // TO BE HANDED OUT
 private static double exerciseMap(int threadCount, int perThread, int range,
-                                  final ConcurrentStackImp<Integer> stack) {
+                                  final ConcurrentStackImp stack) {
   Thread[] threads = new Thread[threadCount];
   for (int t=0; t<threadCount; t++) {
     final int myThread = t;
@@ -62,7 +62,7 @@ private static double exerciseMap(int threadCount, int perThread, int range,
   return stack.size();
 }
 
-  private static void parallelTest(final ConcurrentStackImp<Integer> stack) {
+  private static void parallelTest(final ConcurrentStackImp stack) {
     Timer t = new Timer();
     int trials = 10_000;
     int npairs = 10;
@@ -71,12 +71,12 @@ private static double exerciseMap(int threadCount, int perThread, int range,
     final ExecutorService pool = Executors.newCachedThreadPool();
     new PushPopTest(stack, npairs, trials).test(pool);
     pool.shutdown();
-    double time = t.check() * 1e6;
+    double time = t.check();
     System.out.println("... passed");
-    System.out.printf("time = %10.2f us; threadCount = %d\n", time, threadCount);
+    System.out.printf("time = %10.2f ns; threadCount = %d\n", time, threadCount);
   }
 
-  private static void seqTest(final ConcurrentStackImp<Integer> stack) {
+  private static void seqTest(final ConcurrentStackImp stack) {
     System.out.printf("Sequential test %n%s%n", stack.getClass());
 
     assert stack.size() == 0;
@@ -88,9 +88,8 @@ private static double exerciseMap(int threadCount, int perThread, int range,
     assert stack.pop() == null;
   }
 
-  private static void seqStripedTest(final StripedStack<Integer> stack) {
+  private static void seqStripedTest(final StripedStack stack) {
     System.out.printf("Sequential test for StipedStac %n%s%n", stack.getClass());
-    System.out.printf("Size: %d", stack.size());
     System.out.println();
     stack.push(10);
   }
@@ -152,12 +151,12 @@ class Tests {
 
 class PushPopTest extends Tests {
   protected CyclicBarrier startBarrier, stopBarrier;
-  protected final ConcurrentStackImp<Integer> stack;
+  protected final ConcurrentStackImp stack;
   protected final int nTrials, nPairs;
   protected final AtomicInteger putSum = new AtomicInteger(0);
   protected final AtomicInteger takeSum = new AtomicInteger(0);
 
-  public PushPopTest(ConcurrentStackImp<Integer> stack, int npairs, int ntrials) {
+  public PushPopTest(ConcurrentStackImp stack, int npairs, int ntrials) {
     this.stack = stack;
     this.nTrials = ntrials;
     this.nPairs = npairs;
@@ -218,23 +217,23 @@ class PushPopTest extends Tests {
   }
 }
 
-interface ConcurrentStackList<E> {
-  void push(E e);
-  E pop();
+interface ConcurrentStackList {
+  void push(int e);
+  Integer pop();
   int size();
 }
 
-class ConcurrentStackImp<E> implements ConcurrentStackList<E> {
-  private LinkedList<E> stack = new LinkedList<E>();
+class ConcurrentStackImp implements ConcurrentStackList {
+  private LinkedList<Integer> stack = new LinkedList<Integer>();
   private final Object lock = new Object();
 
-  public void push(E e) {
+  public void push(int e) {
     synchronized (lock) {
       stack.push(e);
     }
   }
 
-  public E pop() {
+  public Integer pop() {
     synchronized (lock) {
       if (!(stack.isEmpty())) {
         return stack.pop();
@@ -252,17 +251,17 @@ class ConcurrentStackImp<E> implements ConcurrentStackList<E> {
   }
 }
 
-class StripedStack<E> {
-  ConcurrentStackImp<E>[] buckets;
+class StripedStack {
+  ConcurrentStackImp[] buckets;
 
   public StripedStack(int bucketCount) {
     this.buckets = makeBuckets(bucketCount);
   }
 
   @SuppressWarnings("unchecked")
-  private static <E> ConcurrentStackImp<E>[] makeBuckets(int size) {
+  private static ConcurrentStackImp[] makeBuckets(int size) {
   // Java's @$#@?!! type system requires this unsafe cast
-    return (ConcurrentStackImp<E>[])new ConcurrentStackImp[size];
+    return (ConcurrentStackImp[])new ConcurrentStackImp[size];
   }
 
   // Protect against poor hash functions and make non-negative
@@ -272,17 +271,27 @@ class StripedStack<E> {
     return (th ^ (th >>> 16)) & 0x7FFFFFFF;
   }
 
-  public void push(E e) {
+  public void push(int e) {
     Thread thread = Thread.currentThread();
     final int h = getHash(thread), hash = h % buckets.length;
     System.out.printf("hash: %d\n", hash);
     buckets[hash].push(e);
   }
 
+  public Integer pop() {
+    Thread thread = Thread.currentThread();
+    final int h = getHash(thread), hash = h % buckets.length;
+    Integer item = null;
+    while (item == null) {
+      item = buckets[hash].pop();
+      return  item;
+    }
+    return null;
+  }
+
   public int size() {
     int count = 0;
     for (int i = 0; i < buckets.length; i++) {
-      buckets[i].push(i);
       count++;
     }
     return count;

@@ -40,7 +40,7 @@ class TestQuickSelect {
     int t=w[p]; w[p]=w[right]; w[right]=t;
     return right;
   }
-  
+
   public static int quickSelect(int[] inp) {
     int w[] = Arrays.copyOf(inp, inp.length);
     return quickSelect(w,0,w.length,w.length/2);
@@ -80,7 +80,7 @@ class TestQuickSelect {
       int j=0;
       for(int i=1;i<n;i++) if(inp[i]>=p) m[j++]=inp[i];
       return quickCountRec(m,target-count-1);
-    }    
+    }
     return p; // we are on target
   }
 
@@ -111,26 +111,28 @@ class TestQuickSelect {
     } while( true );
     return p; // we are on target
   }
-  
+
   public static void main( String [] args ) {
     SystemInfo();
-    int a[] = new int[Integer.parseInt(args[0])]; //100_000_000];
+    for (int size = 1; size < 500_000; size+=5000) {
+    //int a[] = new int[Integer.parseInt(args[0])]; //100_000_000];
+    int a[] = new int[size];
     Random rnd = new Random();
-    if( args.length == 1 ) {
+    if(true) {
       int nrIt = 10;
       for(int ll=0;ll<nrIt;ll++) {
         rnd.setSeed(23434+ll); // seed
         for(int i=0;i<a.length;i++) a[i] = rnd.nextInt(4*a.length);
         final int ra = quickCountRec(a,a.length/2); //
         final int rb = medianPSort(a);
-        if( ra !=rb ) { 
+        if( ra !=rb ) {
           System.out.println(ll);
           System.out.println(ra);
           System.out.println(rb);
           System.exit(0);
         }
       }
-      System.out.println();
+      // System.out.println();
     } else {
         rnd.setSeed(23434+Integer.parseInt(args[1])); // seed
         for(int i=0;i<a.length;i++) a[i] = rnd.nextInt(4*a.length);
@@ -139,29 +141,31 @@ class TestQuickSelect {
     }
     //    System.exit(0);
     double d=0.0;
-    d += Mark9("serial sort", a.length, x -> medianSort(a));
-    d += Mark9("parall sort", a.length, x -> medianPSort(a));
-    d += Mark9("serial qsel", a.length, x -> quickSelect(a));
-    d += Mark9("ser countRc", a.length,x -> quickCountRec(a,a.length/2));
-    d += Mark9("ser countIt", a.length,x -> quickCountIt(a));
+    // System.out.println(size);
+    // d += Mark9(String.format("serial sort %6d", size), a.length, x -> medianSort(a));
+    // d += Mark9(String.format("parall sort %6d", size), a.length, x -> medianPSort(a));
+    // d += Mark9(String.format("serial qsel %6d", size), a.length, x -> quickSelect(a));
+    // d += Mark9(String.format("ser countRc %6d", size), a.length,x -> quickCountRec(a,a.length/2));
+    d += Mark9(String.format("ser countIt %6d", size), a.length,x -> quickCountIt(a));
     //d += Mark9("task countt", a.length,x -> quickCountItTask(a));
     //d += Mark9("task countR", a.length,x -> quickCountRecTask(a,a.length/2));
-    System.out.println(d);
+    // System.out.println(d);
+    }
   }
 
     public static double Mark7(String msg, IntToDoubleFunction f) {
     int n = 10, count = 1, totalCount = 0;
     double dummy = 0.0, runningTime = 0.0, st = 0.0, sst = 0.0;
-    do { 
+    do {
       count *= 2;
       st = sst = 0.0;
       for (int j=0; j<n; j++) {
         Timer t = new Timer();
-        for (int i=0; i<count; i++) 
+        for (int i=0; i<count; i++)
           dummy += f.applyAsDouble(i);
         runningTime = t.check();
         double time = runningTime * 1e9 / count;
-        st += time; 
+        st += time;
         sst += time * time;
         totalCount += count;
       }
@@ -174,16 +178,16 @@ class TestQuickSelect {
   public static double Mark9(String msg, int size, IntToDoubleFunction f) {
     int n = 5, count = 1, totalCount = 0;
     double dummy = 0.0, runningTime = 0.0, st = 0.0, sst = 0.0;
-    do { 
+    do {
       count *= 2;
       st = sst = 0.0;
       for (int j=0; j<n; j++) {
         Timer t = new Timer();
-        for (int i=0; i<count; i++) 
+        for (int i=0; i<count; i++)
           dummy += f.applyAsDouble(i);
         runningTime = t.check();
         double time = runningTime * 1e9 / count; // microseconds
-        st += time; 
+        st += time;
         sst += time * time;
         totalCount += count;
       }
@@ -194,19 +198,19 @@ class TestQuickSelect {
   }
 
   public static void SystemInfo() {
-    System.out.printf("# OS:   %s; %s; %s%n", 
-                      System.getProperty("os.name"), 
-                      System.getProperty("os.version"), 
+    System.out.printf("# OS:   %s; %s; %s%n",
+                      System.getProperty("os.name"),
+                      System.getProperty("os.version"),
                       System.getProperty("os.arch"));
-    System.out.printf("# JVM:  %s; %s%n", 
-                      System.getProperty("java.vendor"), 
+    System.out.printf("# JVM:  %s; %s%n",
+                      System.getProperty("java.vendor"),
                       System.getProperty("java.version"));
     // The processor identifier works only on MS Windows:
-    System.out.printf("# CPU:  %s; %d \"cores\"%n", 
+    System.out.printf("# CPU:  %s; %d \"cores\"%n",
                       System.getenv("PROCESSOR_IDENTIFIER"),
                       Runtime.getRuntime().availableProcessors());
     java.util.Date now = new java.util.Date();
-    System.out.printf("# Date: %s%n", 
+    System.out.printf("# Date: %s%n",
       new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(now));
   }
 
