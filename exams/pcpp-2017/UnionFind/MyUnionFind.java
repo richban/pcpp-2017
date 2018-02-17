@@ -8,7 +8,7 @@
 // 1991; and Florian Biermann: Connected set filtering on shared
 // memory multiprocessors, MSc thesis, IT University of Copenhagen,
 // June 2014.
- 
+
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -36,6 +36,10 @@ public class MyUnionFind {
       test.sequential(new WaitFreeUnionFind(5));
       test.concurrent(itemCount, new WaitFreeUnionFind(itemCount));
     }
+    {
+      UnionFindTest test = new UnionFindTest();
+      test.deadlockTest(7, 10, new BogusFineUnionFind(20));
+    }
   }
 }
 
@@ -59,7 +63,7 @@ class UnionFindTest extends Tests {
     // Union
     uf.union(1, 2);
     assertEquals(uf.find(1), uf.find(2));
-    
+
     uf.union(2, 3);
     assertEquals(uf.find(1), uf.find(2));
     assertEquals(uf.find(1), uf.find(3));
@@ -76,18 +80,18 @@ class UnionFindTest extends Tests {
 
   public void concurrent(final int size, final UnionFind uf) throws Exception {
     final int[] numbers = new int[size];
-    for (int i = 0; i < numbers.length; ++i) 
+    for (int i = 0; i < numbers.length; ++i)
       numbers[i] = i;
     // Populate threads
     final int threadCount = 32;
-    final CyclicBarrier startBarrier = new CyclicBarrier(threadCount+1), 
+    final CyclicBarrier startBarrier = new CyclicBarrier(threadCount+1),
       stopBarrier = startBarrier;
     Collections.shuffle(Arrays.asList(numbers));
     for (int i = 0; i < threadCount; ++i) {
       Thread ti = new Thread(new Runnable() { public void run() {
         try { startBarrier.await(); } catch (Exception exn) { }
         for (int j=0; j<100; j++)
-          for (int i = 0; i < numbers.length - 1; ++i) 
+          for (int i = 0; i < numbers.length - 1; ++i)
             uf.union(numbers[i], numbers[i + 1]);
         try { stopBarrier.await(); } catch (Exception exn) { }
       }});
@@ -101,16 +105,40 @@ class UnionFindTest extends Tests {
     }
     System.out.println("passed");
   }
+
+  public void deadlockTest(int x, int y, final UnionFind uf) throws Exception {
+    System.out.printf("Testing %s ... ", uf.getClass());
+    final int threadCount = 32;
+    final CyclicBarrier startBarrier = new CyclicBarrier(threadCount*2),
+      stopBarrier = startBarrier;
+      for (int i = 0; i < threadCount; ++i) {
+        Thread ti = new Thread(new Runnable() { public void run() {
+          try { startBarrier.await(); } catch (Exception exn) { }
+            uf.union(x, y);
+          try { stopBarrier.await(); } catch (Exception exn) { }
+        }});
+        Thread tj = new Thread(new Runnable() { public void run() {
+          try { startBarrier.await(); } catch (Exception exn) { }
+            uf.union(y, x);
+          try { stopBarrier.await(); } catch (Exception exn) { }
+        }});
+        ti.start();
+        tj.start();
+      }
+      startBarrier.await();
+      stopBarrier.await();
+      System.out.println("passed");
+  }
 }
 
 class Tests {
   public static void assertEquals(int x, int y) throws Exception {
-    if (x != y) 
+    if (x != y)
       throw new Exception(String.format("ERROR: %d not equal to %d%n", x, y));
   }
 
   public static void assertTrue(boolean b) throws Exception {
-    if (!b) 
+    if (!b)
       throw new Exception(String.format("ERROR: assertTrue"));
   }
 }
@@ -164,7 +192,7 @@ class CoarseUnionFind implements UnionFind {
 
 // Fine-locking union-find.  Union and sameset lock on the intrinsic
 // locks of the two root Nodes involved.  Find is wait-free, takes no
-// locks, and performs no compression.  
+// locks, and performs no compression.
 
 // The nodes[] array entries are never updated after initialization
 // inside the constructor, so no need to worry about their visibility.
@@ -182,7 +210,7 @@ class FineUnionFind implements UnionFind {
   }
 
   public int find(int x) {
-    while (nodes[x].next != x) 
+    while (nodes[x].next != x)
       x = nodes[x].next;
     return x;
   }
@@ -192,11 +220,11 @@ class FineUnionFind implements UnionFind {
       int rx = find(x), ry = find(y);
       if (rx == ry)
         return;
-      else if (rx > ry) { 
-        int tmp = rx; rx = ry; ry = tmp; 
+      else if (rx > ry) {
+        int tmp = rx; rx = ry; ry = tmp;
       }
       // Now rx < ry; take locks in consistent order
-      synchronized (nodes[rx]) { 
+      synchronized (nodes[rx]) {
         synchronized (nodes[ry]) {
           // Check rx, ry are still roots, else restart
           if (nodes[rx].next != rx || nodes[ry].next != ry)
@@ -210,8 +238,8 @@ class FineUnionFind implements UnionFind {
             nodes[ry].rank++;
           compress(x, ry);
           compress(y, ry);
-        } }  
-    } 
+        } }
+    }
   }
 
   // Assumes lock is held on nodes[root]
@@ -238,7 +266,7 @@ class FineUnionFind implements UnionFind {
 
 // Bogus Fine-locking union-find.  Union and sameset lock on the intrinsic
 // locks of the two root Nodes involved.  Find is wait-free, takes no
-// locks, and performs no compression.  
+// locks, and performs no compression.
 
 // The nodes[] array entries are never updated after initialization
 // inside the constructor, so no need to worry about their visibility.
@@ -256,7 +284,7 @@ class BogusFineUnionFind implements UnionFind {
   }
 
   public int find(int x) {
-    while (nodes[x].next != x) 
+    while (!isRoot(x))
       x = nodes[x].next;
     return x;
   }
@@ -266,10 +294,10 @@ class BogusFineUnionFind implements UnionFind {
       int rx = find(x), ry = find(y);
       if (rx == ry)
         return;
-      synchronized (nodes[rx]) { 
+      synchronized (nodes[rx]) {
         synchronized (nodes[ry]) {
           // Check rx, ry are still roots, else restart
-          if (nodes[rx].next != rx || nodes[ry].next != ry)
+          if (!isRoot(rx) || !isRoot(ry))
             continue;
           if (nodes[rx].rank > nodes[ry].rank) {
             int tmp = rx; rx = ry; ry = tmp;
@@ -281,13 +309,13 @@ class BogusFineUnionFind implements UnionFind {
           compress(x, ry);
           compress(y, ry);
         }
-      }  
-    } 
+      }
+    }
   }
 
   // Assumes lock is held on nodes[root]
   private void compress(int x, final int root) {
-    while (nodes[x].next != x) {
+    while (!isRoot(x)) {
       int next = nodes[x].next;
       nodes[x].next = root;
       x = next;
@@ -296,6 +324,10 @@ class BogusFineUnionFind implements UnionFind {
 
   public boolean sameSet(int x, int y) {
     return find(x) == find(y);
+  }
+
+  private boolean isRoot(int index) {
+    return nodes[index].next == index;
   }
 
   class Node {
@@ -329,7 +361,7 @@ class WaitFreeUnionFind implements UnionFind {
 
   public int find(int x) {
     while (nodes.get(x).next.get() != x) {
-      final int t = nodes.get(x).next.get(), 
+      final int t = nodes.get(x).next.get(),
         u = nodes.get(t).next.get();
       nodes.get(x).next.compareAndSet(t, u);
       x = u;
@@ -340,7 +372,7 @@ class WaitFreeUnionFind implements UnionFind {
   public void union(int x, int y) {
     int xr, yr;
     do {
-      x = find(x); 
+      x = find(x);
       y = find(y);
       if (x == y)
         return;
@@ -351,9 +383,9 @@ class WaitFreeUnionFind implements UnionFind {
         { int tmp = xr; xr = yr; yr = tmp; }
       }
     } while (!updateRoot(x, xr, y, xr));
-    if (xr == yr) 
+    if (xr == yr)
       updateRoot(y, yr, y, yr+1);
-    setRoot(x);    
+    setRoot(x);
   }
 
   private void setRoot(int x) {
@@ -372,7 +404,7 @@ class WaitFreeUnionFind implements UnionFind {
     do {
       x = find(x);
       y = find(y);
-      if (x == y) 
+      if (x == y)
         return true;
     } while (nodes.get(x).next.get() != x);
     return false;
