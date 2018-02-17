@@ -12,7 +12,7 @@ state = x;
 }
 ```
 
-### 6.1 
+### 6.1
 * Describe a situation where the above does not achieve consensus.
 
 
@@ -24,7 +24,6 @@ state = x;
 * Consider the following variant:
 
 ```
-
 AtomicInteger state = new AtomicInteger(-1);
 int consensus(int x) { // invariant: x > 0
     assert( x > 0 ) ;
