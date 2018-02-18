@@ -9,6 +9,16 @@ In fact a thread acquires two locks but it does not pick the locations of the el
 ### 4.2
 * Give an example program using this data structure and a schedule that deadlocks.
 
+Thread A comes and acquires the lock at index 7 and between acquireing the second lock at index 10 B thread is scheduled and acquires the lock at index 10, therefore 10 is locked and thread A cannot progress, and either B because it's trying to acquire the lock at index 7 that is being hold by thread A. Thus they're trying to acquiring the same lock and are in dedlock now.
+
+```
+synchronized (nodes[rx]) {
+    // A thread acquires lock on 7 and wants to acquire the lock on 10
+    // however between the synchronized methods B threads comes in and
+    // acquires the lock on 10 and wants to acquire the lock on 7 which
+    // is beaing hold by thread A.
+    synchronized (nodes[ry]) {
+```
 ### 4.3
 * Implement a test program that uses the above data structure and provokes a deadlock with reasonable probability and run it. Do you see it deadlocking? Discuss your findings.
 
@@ -39,9 +49,11 @@ In fact a thread acquires two locks but it does not pick the locations of the el
 }
 ```
 
-In order for scheduling to happen as I have described before I run many threads sequaniatly and tested that on my machine I had to increase the number of threads to deadlock...
+In order for deadlock scheduling to happen as I have described in the previous question I have run many threads sequaniatly and tested that on my machine I had to increase the number of threads to ensure the bigger likelihood of deadlocking.
 
 *Results*
+
+Resuls with 8 threads.
 
 ```
 Testing class CoarseUnionFind ... passed
@@ -49,7 +61,7 @@ Testing class FineUnionFind ... passed
 Testing class WaitFreeUnionFind ... passed
 Testing class BogusFineUnionFind ... passed
 ```
-
+Results with 50 threads.
 ```
 Testing class CoarseUnionFind ... passed
 Testing class FineUnionFind ... passed
