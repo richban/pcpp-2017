@@ -9,7 +9,7 @@ In fact a thread acquires two locks but it does not pick the locations of the el
 ### 4.2
 * Give an example program using this data structure and a schedule that deadlocks.
 
-Thread A comes and acquires the lock at index 7 and between acquireing the second lock at index 10 B thread is scheduled and acquires the lock at index 10, therefore 10 is locked and thread A cannot progress, and either B because it's trying to acquire the lock at index 7 that is being hold by thread A. Thus they're trying to acquiring the same lock and are in dedlock now.
+Thread A comes and acquires the lock at index 7 and between acquiring the second lock at index 10 B thread is scheduled and acquires the lock at index 10, therefore 10 is locked and thread A cannot progress, and either B because it's trying to acquire the lock at index 7 that is being hold by thread A. Thus they're trying to acquiring the same lock and are in dedlock now.
 
 ```
 synchronized (nodes[rx]) {
@@ -49,11 +49,11 @@ synchronized (nodes[rx]) {
 }
 ```
 
-In order for deadlock scheduling to happen as I have described in the previous question I have run many threads sequaniatly and tested that on my machine I had to increase the number of threads to ensure the bigger likelihood of deadlocking.
+In order for deadlock scheduling to happen as I have described in the previous question I have run many threads sequentially and tested that on my machine I had to increase the number of threads to ensure the bigger likelihood of deadlocking.
 
 *Results*
 
-Resuls with 8 threads.
+Results with 8 threads.
 
 ```
 Testing class CoarseUnionFind ... passed

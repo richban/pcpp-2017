@@ -10,10 +10,10 @@ import java.util.function.IntToDoubleFunction;
 
 public class ConcurrentStack {
   public static void main(String[] args) {
-    System.out.printf("STACK");
+    System.out.printf("LINKEDLIST STACK TEST IMPLEMENTATION");
     System.out.println();
     seqTest(new ConcurrentStackImp());
-    parallelTest(new ConcurrentStackImp());
+    // parallelTest(new ConcurrentStackImp());
     // timeAllMaps();
     //seqStripedTest(new StripedStack(32));
   }
@@ -63,17 +63,13 @@ private static double exerciseMap(int threadCount, int perThread, int range,
 }
 
   private static void parallelTest(final ConcurrentStackImp stack) {
-    Timer t = new Timer();
     int trials = 10_000;
     int npairs = 10;
     int threadCount = npairs * 2 + 1;
-    System.out.printf("%nParallel test: %s", stack.getClass());
+    System.out.printf("%nClass test: %s", stack.getClass());
     final ExecutorService pool = Executors.newCachedThreadPool();
     new PushPopTest(stack, npairs, trials).test(pool);
     pool.shutdown();
-    double time = t.check();
-    System.out.println("... passed");
-    System.out.printf("time = %10.2f ns; threadCount = %d\n", time, threadCount);
   }
 
   private static void seqTest(final ConcurrentStackImp stack) {
