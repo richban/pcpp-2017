@@ -10,21 +10,20 @@ import java.util.function.IntToDoubleFunction;
 
 public class ConcurrentStack {
   public static void main(String[] args) {
-    System.out.printf("LINKEDLIST STACK TEST IMPLEMENTATION");
-    System.out.println();
+    SystemInfo();
+    System.out.printf("LINKEDLIST STACK TEST IMPLEMENTATION\n");
     seqTest(new ConcurrentStackImp());
-    // parallelTest(new ConcurrentStackImp());
-    // timeAllMaps();
+    parallelTest(new ConcurrentStackImp());
+    timeAllMaps();
     //seqStripedTest(new StripedStack(32));
   }
 
   private static void timeAllMaps() {
-  final int bucketCount = 100_000, lockCount = 32;
-  for (int t=1; t<=32; t++) {
-    final int threadCount = t;
-    Mark7(String.format("%-21s %d", "STACK", threadCount),
-          i -> timeMap(threadCount, new ConcurrentStackImp()));
-    }
+    for (int t=1; t<=32; t++) {
+      final int threadCount = t;
+      Mark7(String.format("%-21s %d", "STACK", threadCount),
+            i -> timeMap(threadCount, new ConcurrentStackImp()));
+      }
   }
 
   private static double timeMap(int threadCount, final ConcurrentStackImp stack) {
@@ -66,14 +65,14 @@ private static double exerciseMap(int threadCount, int perThread, int range,
     int trials = 10_000;
     int npairs = 10;
     int threadCount = npairs * 2 + 1;
-    System.out.printf("%nClass test: %s", stack.getClass());
+    System.out.printf("%nParallel test: %s \n", stack.getClass());
     final ExecutorService pool = Executors.newCachedThreadPool();
     new PushPopTest(stack, npairs, trials).test(pool);
     pool.shutdown();
   }
 
   private static void seqTest(final ConcurrentStackImp stack) {
-    System.out.printf("Sequential test %n%s%n", stack.getClass());
+    System.out.printf("Sequential test %s", stack.getClass());
 
     assert stack.size() == 0;
     stack.push(1);
@@ -217,32 +216,31 @@ interface ConcurrentStackList {
   void push(int e);
   Integer pop();
   int size();
+  boolean isEmpty();
 }
 
 class ConcurrentStackImp implements ConcurrentStackList {
   private LinkedList<Integer> stack = new LinkedList<Integer>();
-  private final Object lock = new Object();
+  private int cachedSize;
 
-  public void push(int e) {
-    synchronized (lock) {
-      stack.push(e);
-    }
+  public synchronized void push(int e) {
+    cachedSize++;
+    stack.push(e);
   }
 
-  public Integer pop() {
-    synchronized (lock) {
+  public synchronized Integer pop() {
       if (!(stack.isEmpty())) {
+        cachedSize--;
         return stack.pop();
       }
       else return null;
-    }
   }
 
-  public int size() {
-    return stack.size();
+  public synchronized int size() {
+    return cachedSize;
   }
 
-  public boolean isEmpty() {
+  public synchronized boolean isEmpty() {
     return stack.isEmpty();
   }
 }
