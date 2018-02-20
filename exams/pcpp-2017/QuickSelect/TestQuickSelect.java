@@ -116,39 +116,6 @@ class TestQuickSelect {
     SystemInfo();
     int input_size = Integer.parseInt(args[0]);
     SortingBenchmarks(input_size);
-    // int a[] = new int[input_size]; //100_000_000];
-    // Random rnd = new Random();
-    // if( args.length == 1 ) {
-    //   int nrIt = 10;
-    //   for(int ll=0;ll<nrIt;ll++) {
-    //     rnd.setSeed(23434+ll); // seed
-    //     for(int i=0;i<a.length;i++) a[i] = rnd.nextInt(4*a.length);
-    //     final int ra = quickCountRec(a,a.length/2); //
-    //     final int rb = medianPSort(a);
-    //     if( ra !=rb ) {
-    //       System.out.println(ll);
-    //       System.out.println(ra);
-    //       System.out.println(rb);
-    //       System.exit(0);
-    //     }
-    //   }
-    //   System.out.println();
-    // } else {
-    //     rnd.setSeed(23434+Integer.parseInt(args[1])); // seed
-    //     for(int i=0;i<a.length;i++) a[i] = rnd.nextInt(4*a.length);
-    //     System.out.println(medianPSort(a));
-    //     System.out.println(quickCountRec(a,a.length/2));
-    // }
-    //    System.exit(0);
-    // double d=0.0;
-    // d += Mark9("serial sort", a.length, x -> medianSort(a));
-    // d += Mark9("parall sort", a.length, x -> medianPSort(a));
-    // d += Mark9("serial qsel", a.length, x -> quickSelect(a));
-    // d += Mark9("ser countRc", a.length,x -> quickCountRec(a,a.length/2));
-    // d += Mark9("ser countIt", a.length,x -> quickCountIt(a));
-    //d += Mark9("task countt", a.length,x -> quickCountItTask(a));
-    //d += Mark9("task countR", a.length,x -> quickCountRecTask(a,a.length/2));
-    // System.out.println(d);
   }
 
   private static void SetupSort(int[] a) {
