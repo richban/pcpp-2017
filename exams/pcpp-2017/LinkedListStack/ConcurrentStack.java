@@ -12,10 +12,13 @@ public class ConcurrentStack {
   public static void main(String[] args) {
     SystemInfo();
     System.out.printf("LINKEDLIST STACK TEST IMPLEMENTATION\n");
-    seqTest(new ConcurrentStackImp());
-    parallelTest(new ConcurrentStackImp());
-    timeAllMaps();
-    //seqStripedTest(new StripedStack(32));
+    // // Sequential test for correctness of the implemantation
+    // seqTest(new ConcurrentStackImp());
+    // // Parallel test for the correctness of the implemantation
+    // parallelTest(new ConcurrentStackImp());
+    // // Benchmark performance test using Mark7
+    // timeAllMaps();
+    seqStripedTest(new StripedStack(32, 32));
   }
 
   private static void timeAllMaps() {
@@ -247,9 +250,17 @@ class ConcurrentStackImp implements ConcurrentStackList {
 
 class StripedStack {
   ConcurrentStackImp[] buckets;
+  private final int lockCount;
+  private final Object[] locks;
 
-  public StripedStack(int bucketCount) {
+  public StripedStack(int bucketCount, int lockCount) {
     this.buckets = makeBuckets(bucketCount);
+    this.lockCount = lockCount;
+    this.locks = new Object[lockCount];
+    for (int stripe=0; stripe < buckets.length; stripe++) {
+      this.buckets[stripe] = new ConcurrentStackImp();
+      this.locks[stripe] = new Object();
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -267,20 +278,31 @@ class StripedStack {
 
   public void push(int e) {
     Thread thread = Thread.currentThread();
-    final int h = getHash(thread), hash = h % buckets.length;
-    System.out.printf("hash: %d\n", hash);
-    buckets[hash].push(e);
+    final int h = getHash(thread), stripe = h % buckets.length;
+    synchronized (locks[stripe]) {
+      System.out.printf("hash: %d\n", stripe);
+      buckets[stripe].push(e);
+    }
+
   }
 
   public Integer pop() {
     Thread thread = Thread.currentThread();
-    final int h = getHash(thread), hash = h % buckets.length;
-    Integer item = null;
-    while (item == null) {
-      item = buckets[hash].pop();
-      return  item;
+    final int h = getHash(thread), stripe = h % buckets.length;
+    synchronized (locks[stripe]) {
+      Integer item = buckets[stripe].pop();
+      if ( item == null) {
+        for (int i = 0; i < lockCount; i++) {
+          synchronized (locks[i]) {
+            while ( item == null)
+              item = buckets[i].pop();
+          }
+        }
+      } else {
+        return item;
+      }
+      return null;
     }
-    return null;
   }
 
   public int size() {
