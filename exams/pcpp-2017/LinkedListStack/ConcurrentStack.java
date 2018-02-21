@@ -17,8 +17,8 @@ public class ConcurrentStack {
     // // Parallel test for the correctness of the implemantation
     // parallelTest(new ConcurrentStackImp());
     // // Benchmark performance test using Mark7
-    // timeAllMaps();
-    seqStripedTest(new StripedStack(32, 32));
+    timeAllMaps();
+    // seqStripedTest(new StripedStack(32, 32));
   }
 
   private static void timeAllMaps() {
@@ -26,18 +26,23 @@ public class ConcurrentStack {
       final int threadCount = t;
       Mark7(String.format("%-21s %d", "STACK", threadCount),
             i -> timeMap(threadCount, new ConcurrentStackImp()));
+    }
+    for (int t=1; t<=32; t++) {
+      final int threadCount = t;
+      Mark7(String.format("%-21s %d", "STRIPED STACK", threadCount),
+            i -> timeMap(threadCount, new StripedStack(32, 32)));
       }
   }
 
-  private static double timeMap(int threadCount, final ConcurrentStackImp stack) {
-    final int iterations = 5_000_000, perThread = iterations / threadCount;
+  private static double timeMap(int threadCount, final ConcurrentStackList stack) {
+    final int iterations = 1_000_000, perThread = iterations / threadCount;
     final int range = 200_000;
     return exerciseMap(threadCount, perThread, range, stack);
   }
 
   // TO BE HANDED OUT
 private static double exerciseMap(int threadCount, int perThread, int range,
-                                  final ConcurrentStackImp stack) {
+                                  final ConcurrentStackList stack) {
   Thread[] threads = new Thread[threadCount];
   for (int t=0; t<threadCount; t++) {
     final int myThread = t;
@@ -45,11 +50,12 @@ private static double exerciseMap(int threadCount, int perThread, int range,
       Random random = new Random(37 * myThread + 78);
       for (int i=0; i<perThread; i++) {
         Integer item = random.nextInt(range);
+        // Add item with probability 60%
         if (random.nextDouble() < 0.60) {
           stack.push(item);
         }
-        else
-          if (random.nextDouble() < 0.02) {
+        else // pop item with probability 20% and reinsert
+          if (random.nextDouble() < 0.20) {
             stack.pop();
           }
       }
@@ -248,15 +254,17 @@ class ConcurrentStackImp implements ConcurrentStackList {
   }
 }
 
-class StripedStack {
+class StripedStack implements ConcurrentStackList {
   ConcurrentStackImp[] buckets;
   private final int lockCount;
   private final Object[] locks;
+  private final int[] sizes;
 
   public StripedStack(int bucketCount, int lockCount) {
     this.buckets = makeBuckets(bucketCount);
     this.lockCount = lockCount;
     this.locks = new Object[lockCount];
+    this.sizes = new int[lockCount];
     for (int stripe=0; stripe < buckets.length; stripe++) {
       this.buckets[stripe] = new ConcurrentStackImp();
       this.locks[stripe] = new Object();
@@ -272,7 +280,7 @@ class StripedStack {
   // Protect against poor hash functions and make non-negative
   private static int getHash(Thread t) {
     final int th = t.hashCode();
-    System.out.printf("th: %d\n", th);
+    // System.out.printf("th: %d\n", th);
     return (th ^ (th >>> 16)) & 0x7FFFFFFF;
   }
 
@@ -280,7 +288,7 @@ class StripedStack {
     Thread thread = Thread.currentThread();
     final int h = getHash(thread), stripe = h % buckets.length;
     synchronized (locks[stripe]) {
-      System.out.printf("hash: %d\n", stripe);
+      //System.out.printf("hash: %d\n", stripe);
       buckets[stripe].push(e);
     }
 
@@ -291,26 +299,25 @@ class StripedStack {
     final int h = getHash(thread), stripe = h % buckets.length;
     synchronized (locks[stripe]) {
       Integer item = buckets[stripe].pop();
-      if ( item == null) {
-        for (int i = 0; i < lockCount; i++) {
-          synchronized (locks[i]) {
-            while ( item == null)
-              item = buckets[i].pop();
-          }
-        }
-      } else {
-        return item;
-      }
-      return null;
+      if (item == null) { return null; }
+      else { return item; }
     }
   }
 
+  @Override
   public int size() {
-    int count = 0;
-    for (int i = 0; i < buckets.length; i++) {
-      count++;
+    int result = 0;
+    for (int stripe = 0; stripe < buckets.length; stripe++) {
+      synchronized (locks[stripe]) {
+        result += buckets[stripe].size();
+      }
     }
-    return count;
+    return result;
+  }
+
+  @Override
+  public boolean isEmpty() {
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 
 }
