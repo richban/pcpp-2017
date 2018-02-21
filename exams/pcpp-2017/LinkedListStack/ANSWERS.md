@@ -150,3 +150,11 @@ STACK                 30  1531795050000.0 us 221013091002.23          2
 STACK                 31  1808614900000.0 us 215289526893.41          2
 STACK                 32  1675416400000.0 us 241262993886.78          2
 ```
+
+*We want to improve the performance by lock striping, using the following ideas*
+
+**Implementation: ConcurrentStack.java -> class StripedStack {}**
+
+*Run a performance test. Do you see the hoped for improvement in performance*
+
+![alt text](../Results/linkedlist.png "Performance: synchronized stack vs striped stack")

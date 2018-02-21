@@ -67,6 +67,7 @@ private static double exerciseMap(int threadCount, int perThread, int range,
     for (int t=0; t<threadCount; t++)
       threads[t].join();
   } catch (InterruptedException exn) { }
+  // all the other threads stop
   return stack.size();
 }
 
@@ -111,14 +112,14 @@ public static double Mark7(String msg, IntToDoubleFunction f) {
       for (int i=0; i<count; i++)
         dummy += f.applyAsDouble(i);
       runningTime = t.check();
-      double time = runningTime * 1e6 / count; // microseconds
+      double time = runningTime * 1e3 / count; // miliseconds
       st += time;
       sst += time * time;
       totalCount += count;
     }
   } while (runningTime < 0.25 && count < Integer.MAX_VALUE/2);
   double mean = st/n, sdev = Math.sqrt((sst - mean*mean*n)/(n-1));
-  System.out.printf("%-25s %15.1f us %10.2f %10d%n", msg, mean, sdev, count);
+  System.out.printf("%-25s %15.1f ms %10.2f %10d%n", msg, mean, sdev, count);
   return dummy / totalCount;
 }
 
@@ -297,11 +298,19 @@ class StripedStack implements ConcurrentStackList {
   public Integer pop() {
     Thread thread = Thread.currentThread();
     final int h = getHash(thread), stripe = h % buckets.length;
+    Integer item = null;
     synchronized (locks[stripe]) {
-      Integer item = buckets[stripe].pop();
-      if (item == null) { return null; }
-      else { return item; }
+      item = buckets[stripe].pop();
     }
+    if (item == null) {
+      for (int i=0;i < lockCount ; i++) {
+        synchronized (locks[i]) {
+          item = buckets[i].pop();
+          if (item != null) { return item; }
+        }
+      }
+    }
+    return null;
   }
 
   @Override
