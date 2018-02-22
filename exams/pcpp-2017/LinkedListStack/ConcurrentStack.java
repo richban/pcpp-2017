@@ -255,6 +255,32 @@ class ConcurrentStackImp implements ConcurrentStackList {
   }
 }
 
+class BogusConcurrentStack implements ConcurrentStackList {
+  private LinkedList<Integer> stack = new LinkedList<Integer>();
+  private int cachedSize;
+
+  public synchronized void push(int e) {
+    cachedSize++;
+    stack.push(e);
+  }
+
+  public synchronized Integer pop() {
+      if (!(stack.isEmpty())) {
+        cachedSize--;
+        return stack.removeLast();
+      }
+      else return null;
+  }
+  
+  public synchronized int size() {
+    return cachedSize;
+  }
+
+  public synchronized boolean isEmpty() {
+    return stack.isEmpty();
+  }
+}
+
 class StripedStack implements ConcurrentStackList {
   ConcurrentStackImp[] buckets;
   private final int lockCount;
