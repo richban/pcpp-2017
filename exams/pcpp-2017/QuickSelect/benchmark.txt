@@ -1,0 +1,15 @@
+# OS:   Mac OS X; 10.13.3; x86_64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 8 "cores"
+# Date: 2018-02-22T20:52:17+0100
+serial sort                    100          851.9 ns       2.01    2097152
+serial sort                    200         2204.4 ns     277.38     524288
+serial sort                    400         4512.2 ns      31.07     262144
+serial sort                    800        13573.2 ns      58.70     131072
+serial sort                   1600        51264.2 ns     219.77      32768
+serial sort                   3200       185541.0 ns   70763.54       8192
+serial sort                   6400       304002.2 ns   13907.15       4096
+serial sort                  12800       668806.7 ns   16762.08       2048
+serial sort                  25600      1400764.2 ns    8590.41       1024
+serial sort                  51200      2916172.2 ns    8591.75        512
+parallel sort                  100          872.4 ns      20.03    2097152
