@@ -124,14 +124,14 @@ class TestQuickSelect {
     for(int ll=0;ll<nrIt;ll++) {
       rnd.setSeed(23434+ll); // seed
       for(int i=0;i<a.length;i++) a[i] = rnd.nextInt(4*a.length);
-      final int ra = quickCountRec(a,a.length/2); //
-      final int rb = medianPSort(a);
-      if( ra !=rb ) {
-        System.out.println(ll);
-        System.out.println(ra);
-        System.out.println(rb);
-        System.exit(0);
-      }
+      // final int ra = quickCountRec(a,a.length/2); //
+      // final int rb = medianPSort(a);
+      // if( ra !=rb ) {
+      //   System.out.println(ll);
+      //   System.out.println(ra);
+      //   System.out.println(rb);
+      //   System.exit(0);
+      // }
     }
   }
 
@@ -144,6 +144,42 @@ class TestQuickSelect {
                    public void setup() { SetupSort(a); }
                    public double applyAsDouble(int i)
                    { medianSort(a); return 0.0; } });
+    }
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = new int[size];
+      Mark8Setup("parallel sort",
+                 String.format("%8d", size),
+                 new Benchmarkable() {
+                   public void setup() { SetupSort(a); }
+                   public double applyAsDouble(int i)
+                   { medianPSort(a); return 0.0; } });
+    }
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = new int[size];
+      Mark8Setup("serial quickSelect",
+                 String.format("%8d", size),
+                 new Benchmarkable() {
+                   public void setup() { SetupSort(a); }
+                   public double applyAsDouble(int i)
+                   { quickSelect(a); return 0.0; } });
+    }
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = new int[size];
+      Mark8Setup("ser countIt",
+                 String.format("%8d", size),
+                 new Benchmarkable() {
+                   public void setup() { SetupSort(a); }
+                   public double applyAsDouble(int i)
+                   { quickCountIt(a); return 0.0; } });
+    }
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = new int[size];
+      Mark8Setup("ser countRc",
+                 String.format("%8d", size),
+                 new Benchmarkable() {
+                   public void setup() { SetupSort(a); }
+                   public double applyAsDouble(int i)
+                   { quickCountRec(a,a.length/2); return 0.0; } });
     }
   }
 
@@ -175,7 +211,7 @@ class TestQuickSelect {
   }
 
   public static double Mark8Setup(String msg, String info, Benchmarkable f) {
-    return Mark8Setup(msg, info, f, 10, 0.25);
+    return Mark8Setup(msg, info, f, 10, 1);
   }
 
   public static void SystemInfo() {
