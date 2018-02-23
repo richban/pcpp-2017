@@ -36,13 +36,14 @@ private static void seqTest(final ConcurrentStackImp stack) {
 }
 ```
 
-Also I have creating a *parallelTest* with N-threads with aggregate results.
+Also I have created a *parallelTest* with N-threads with aggregate results.
 For this test I have used the **CyclicBarrier(N)** and used the Consumer & Producer
 pattern. First I create *npairs* of Producers and Consumers. The Producers
 pushes *nTrials* random numbers and the consumer pops *nTrials* from the stack.
 Afterwards I check the consumed numbers is equals to the sum of the produced
 numbers. Both of them are summing a thread-local *sum* variable and than adding
-the result to a common  AtomicInteger.
+the result to a common  AtomicInteger. Thus the implementation meets it's functional
+requirement in a concurrent setting.
 
 ```
 class PushPopTest extends Tests {
@@ -117,38 +118,70 @@ class PushPopTest extends Tests {
 *Performance*
 
 ```
-STACK                 1   1154046900000.0 us 638852060767.93          2
-STACK                 2   1440819100000.0 us 345149951903.90          2
-STACK                 3    808908300000.0 us 36570813608.82           2
-STACK                 4    923729350000.0 us 225287299566.46          2
-STACK                 5    979386900000.0 us 297001563508.68          2
-STACK                 6    912873900000.0 us 158227101662.07          2
-STACK                 7    858515050000.0 us 153598975339.00          2
-STACK                 8    820701600000.0 us 370105177957.55          2
-STACK                 9    881084950000.0 us 133297981692.74          2
-STACK                 10   922332700000.0 us 183554819872.28          2
-STACK                 11  1691643100000.0 us 285135043876.27          2
-STACK                 12   844014300000.0 us 162409074457.95          2
-STACK                 13   856872000000.0 us 348818537776.85          2
-STACK                 14   840118150000.0 us 370701332681.79          2
-STACK                 15   886889600000.0 us 160609349088.75          2
-STACK                 16   914552600000.0 us 350710412496.45          2
-STACK                 17   885067350000.0 us 163807689060.65          2
-STACK                 18   964158600000.0 us 144789777210.66          2
-STACK                 19  1097849750000.0 us 259243322886.72          2
-STACK                 20   997320100000.0 us 182125436569.87          2
-STACK                 21  1054127400000.0 us 208950148020.18          2
-STACK                 22  1269539600000.0 us 245572585578.84          2
-STACK                 23  1280002100000.0 us 267614292284.60          2
-STACK                 24  1235818150000.0 us 313159192455.96          2
-STACK                 25  1383544350000.0 us 330531062976.44          2
-STACK                 26  1500327450000.0 us 250018941816.13          2
-STACK                 27  1426553550000.0 us 259651751803.84          2
-STACK                 28  1641479100000.0 us 371752434650.46          2
-STACK                 29  1552492350000.0 us 391481097157.89          2
-STACK                 30  1531795050000.0 us 221013091002.23          2
-STACK                 31  1808614900000.0 us 215289526893.41          2
-STACK                 32  1675416400000.0 us 241262993886.78          2
+STACK                 1     85242089900.0 ms 20000051903.20          2
+STACK                 2    154794872250.0 ms 18465084607.51          2
+STACK                 3    110640898200.0 ms 12998640618.15          2
+STACK                 4    149573320300.0 ms 16993331468.59          2
+STACK                 5    147559105350.0 ms 7478417483.04          2
+STACK                 6    148149278750.0 ms 9311182073.98          2
+STACK                 7    145702732500.0 ms 4666769875.10          2
+STACK                 8    143224915450.0 ms 4515393894.18          2
+STACK                 9    142721823100.0 ms 3400317717.23          2
+STACK                 10   145412906200.0 ms 3413457925.33          2
+STACK                 11   143447644200.0 ms 3097260090.47          2
+STACK                 12   141824955300.0 ms 4945770882.33          2
+STACK                 13   142242470000.0 ms 3174866220.53          2
+STACK                 14   143949764500.0 ms 2786600769.20          2
+STACK                 15   146404587400.0 ms 16108677239.63          2
+STACK                 16   141004786100.0 ms 3715933378.64          2
+STACK                 17   145776930850.0 ms 5425092691.89          2
+STACK                 18   140945899950.0 ms 3102080430.00          2
+STACK                 19   144937240000.0 ms 3903865458.53          2
+STACK                 20   142560768200.0 ms 4152427160.12          2
+STACK                 21   145882030400.0 ms 13628822709.99          2
+STACK                 22   140082925600.0 ms 6151480125.63          2
+STACK                 23   139846953100.0 ms 4538194164.35          2
+STACK                 24   135710651700.0 ms 3899262540.33          2
+STACK                 25   138939403300.0 ms 3091765027.61          2
+STACK                 26   141089838050.0 ms 13244149579.92          2
+STACK                 27   142873807000.0 ms 12930054559.33          2
+STACK                 28   140328849300.0 ms 13021087756.13          2
+STACK                 29   140079733950.0 ms 18018942211.23          2
+STACK                 30   141744063750.0 ms 11727383858.44          2
+STACK                 31   138717250350.0 ms 10508410403.80          2
+STACK                 32   136048098000.0 ms 4411981894.80          2
+STRIPED-STACK         1     98347358400.0 ms 6605904659.83          2
+STRIPED-STACK         2     63409075100.0 ms 19217268733.21          2
+STRIPED-STACK         3     46819600700.0 ms 12418486713.10          2
+STRIPED-STACK         4     55773598800.0 ms 23092743258.50          2
+STRIPED-STACK         5     40165670550.0 ms 18609587553.72          2
+STRIPED-STACK         6     44288681100.0 ms 13993533557.24          2
+STRIPED-STACK         7     37984089100.0 ms 10400180101.95          2
+STRIPED-STACK         8     39983661250.0 ms 6394667765.71          2
+STRIPED-STACK         9     38248943400.0 ms 9359360410.59          2
+STRIPED-STACK         10    34425366000.0 ms 7256933325.20          2
+STRIPED-STACK         11    28523888100.0 ms 5233178207.45          2
+STRIPED-STACK         12    32454405050.0 ms 7301581872.60          2
+STRIPED-STACK         13    28463636650.0 ms 2699522715.31          2
+STRIPED-STACK         14    29759544950.0 ms 6042382988.13          2
+STRIPED-STACK         15    29613413950.0 ms 5673564993.67          2
+STRIPED-STACK         16    30148057300.0 ms 3815856696.59          2
+STRIPED-STACK         17    28919513950.0 ms 4088385621.80          2
+STRIPED-STACK         18    29649181250.0 ms 1789205552.25          2
+STRIPED-STACK         19    29588034200.0 ms 3047020738.90          2
+STRIPED-STACK         20    31762340750.0 ms 7682270558.81          2
+STRIPED-STACK         21    29399609300.0 ms 5106695422.61          2
+STRIPED-STACK         22    29326752950.0 ms 3759901953.09          2
+STRIPED-STACK         23    28968637600.0 ms 2696811799.53          2
+STRIPED-STACK         24    29030478750.0 ms 3629115586.94          2
+STRIPED-STACK         25    29312783400.0 ms 3070344498.46          2
+STRIPED-STACK         26    28780310600.0 ms 4190776809.73          2
+STRIPED-STACK         27    28038794400.0 ms 2943390587.04          2
+STRIPED-STACK         28    29068804900.0 ms 3607733292.01          2
+STRIPED-STACK         29    29968892450.0 ms 3996147030.70          2
+STRIPED-STACK         30    27554833950.0 ms 1987679844.10          2
+STRIPED-STACK         31    27844678350.0 ms 3963508507.28          2
+STRIPED-STACK         32    28194843900.0 ms 3069944051.15          2
 ```
 
 *We want to improve the performance by lock striping, using the following ideas*
@@ -156,5 +189,23 @@ STACK                 32  1675416400000.0 us 241262993886.78          2
 **Implementation: ConcurrentStack.java -> class StripedStack {}**
 
 *Run a performance test. Do you see the hoped for improvement in performance*
+
+Each test represents the same amount of work.
+
+Synchronized stack implementation scales poorly on my multicore machine, because
+of the locking mechanism - only one thread at a time can perform ```push()``` or ```pop()```.
+at the same time. The entire stack is guarded by a single lock. However synchronization
+shows some improvement up to 3 threads, but than goes up as synchronization overhead increases.
+By the time it hits 5 threads, contention is so heavy that every access to the stack lock
+is contended.
+
+ So long as contention  is low, time  per operation is dominated by the time to actually do the work and throughput may improve as threads are added. Once contention becomes significant, time per  operation is dominated by context switch and scheduling delays, and adding more threads has  little  effect on throughput.
+
+Striped implementation appears to be almost 5 times faster than synchronized stack.
+This can be interpreted as a confirmation that lock contention is a great source of
+sequentiality in parallel computations. Having 32 stripes (having a lock for every bucket)
+improve performance, however stripes are not related in any way to the number of threads.
+The lock used when accessing the data structure depends on the thread alone. A higher number of stripes means less chances of two or more threads trying to acquire the same lock.
+
 
 ![alt text](../Results/linkedlist.png "Performance: synchronized stack vs striped stack")

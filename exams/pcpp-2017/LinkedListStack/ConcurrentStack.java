@@ -17,7 +17,9 @@ public class ConcurrentStack {
     // // Parallel test for the correctness of the implemantation
     // parallelTest(new ConcurrentStackImp());
     // // Benchmark performance test using Mark7
-    timeAllMaps();
+    // timeAllMaps();
+    // FIFO deque()
+    testFIFO(2, new BogusConcurrentStack());
     // seqStripedTest(new StripedStack(32, 32));
   }
 
@@ -40,6 +42,12 @@ public class ConcurrentStack {
     return exerciseMap(threadCount, perThread, range, stack);
   }
 
+  private static double testFIFO(int threadCount, final ConcurrentStackList stack) {
+    final int iterations = 1_000_000, perThread = iterations / threadCount;
+    final int range = 200_000;
+    return violationTest(threadCount, perThread, range, stack);
+  }
+
   // TO BE HANDED OUT
 private static double exerciseMap(int threadCount, int perThread, int range,
                                   final ConcurrentStackList stack) {
@@ -58,6 +66,30 @@ private static double exerciseMap(int threadCount, int perThread, int range,
           if (random.nextDouble() < 0.20) {
             stack.pop();
           }
+      }
+    });
+  }
+  for (int t=0; t<threadCount; t++)
+    threads[t].start();
+  try {
+    for (int t=0; t<threadCount; t++)
+      threads[t].join();
+  } catch (InterruptedException exn) { }
+  // all the other threads stop
+  return stack.size();
+}
+
+private static double violationTest(int threadCount, int perThread, int range,
+                                  final ConcurrentStackList stack) {
+  Thread[] threads = new Thread[threadCount];
+  for (int t=0; t<threadCount; t++) {
+    final int myThread = t;
+    threads[t] = new Thread(() -> {
+      Random random = new Random(37 * myThread + 78);
+      for (int i=0; i<perThread; i++) {
+        Integer item = random.nextInt(range);
+        if (myThread==0) stack.push(item);
+        else stack.pop();
       }
     });
   }
@@ -261,17 +293,19 @@ class BogusConcurrentStack implements ConcurrentStackList {
 
   public synchronized void push(int e) {
     cachedSize++;
+    System.out.printf("pushed item %d;%n", e);
     stack.push(e);
   }
 
   public synchronized Integer pop() {
       if (!(stack.isEmpty())) {
         cachedSize--;
+        System.out.printf("removed item;\n");
         return stack.removeLast();
       }
       else return null;
   }
-  
+
   public synchronized int size() {
     return cachedSize;
   }
