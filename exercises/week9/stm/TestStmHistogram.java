@@ -33,16 +33,16 @@ class TestStmHistogram {
     final Histogram total = new StmHistogram(30);
     final int range = 4_000_000;
     final int threadCount = 10, perThread = range / threadCount;
-    final CyclicBarrier startBarrier = new CyclicBarrier(threadCount + 1), 
+    final CyclicBarrier startBarrier = new CyclicBarrier(threadCount + 1),
       stopBarrier = startBarrier;
     final Thread[] threads = new Thread[threadCount];
     for (int t=0; t<threadCount; t++) {
-      final int from = perThread * t, 
-                  to = (t+1 == threadCount) ? range : perThread * (t+1); 
-        threads[t] = 
-          new Thread(() -> { 
+      final int from = perThread * t,
+                  to = (t+1 == threadCount) ? range : perThread * (t+1);
+        threads[t] =
+          new Thread(() -> {
 	      try { startBarrier.await(); } catch (Exception exn) { }
-	      for (int p=from; p<to; p++) 
+	      for (int p=from; p<to; p++)
 		histogram.increment(countFactors(p));
 	      System.out.print("*");
 	      try { stopBarrier.await(); } catch (Exception exn) { }
@@ -56,7 +56,7 @@ class TestStmHistogram {
         }
     try { stopBarrier.await(); } catch (Exception exn) { }
     total.transferBins(histogram);
-    dump(histogram); 
+    dump(histogram);
     dump(total);
   }
 
@@ -70,21 +70,21 @@ class TestStmHistogram {
   }
 
   public static int countFactors(int p) {
-    if (p < 2) 
+    if (p < 2)
       return 0;
     int factorCount = 1, k = 2;
     while (p >= k * k) {
       if (p % k == 0) {
         factorCount++;
         p /= k;
-      } else 
+      } else
         k++;
     }
     return factorCount;
   }
 }
 
-interface Histogram { 
+interface Histogram {
   void increment(int bin);
   int getCount(int bin);
   int getSpan();
@@ -94,39 +94,53 @@ interface Histogram {
 }
 
 class StmHistogram implements Histogram {
-  private final TxnInteger[] counts;
+    private final TxnInteger[] bins;
 
-  public StmHistogram(int span) {
-    counts = new TxnInteger[span];
-    for(int i = 0; i < counts.length; i++)
-        counts[i] = newTxnInteger(0);
-  }
+    public StmHistogram(int span) {
+        bins = new TxnInteger[span];
+        for (int k = 0; k < span; ++k) {
+            bins[k] = newTxnInteger(0);
+        }
+    }
 
-  public void increment(int bin) { 
-	atomic(() -> counts[bin].increment());  
-  }
+    public void increment(int bin) {
+        atomic(() -> bins[bin].increment());
+    }
 
-  public int getCount(int bin) {
-    return atomic(() -> counts[bin].get());
-  }
+    public int getCount(int bin) {
+        return atomic(() -> bins[bin].get());
+    }
 
-  public int getSpan() {
-    return counts.length;
-  }
+    public int getSpan() {
+        // Assumed immutable as per specifications
+        return bins.length;
+    }
 
-  public int[] getBins() {
-    return IntStream.range(0, getSpan()).map((bin) -> getCount(bin)).toArray();
-  }
+    public int[] getBins() {
+        // Assumed immutable as per specifications
+        final int binsCount = getSpan();
+        final int[] bins = new int[binsCount];
 
-  public int getAndClear(int bin) {
-   return atomic(() ->  counts[bin].getAndSet(0) );  
-  }
+        atomic(() -> {
+            for (int k = 0; k < binsCount; ++k) {
+                bins[k] = getCount(k);
+            }
+        });
 
-  public void transferBins(Histogram hist) { 
-  for (int i = 0; i < getSpan(); i++) {
-	  final int index = i;
-	  atomic(() ->  {   counts[index].increment(hist.getAndClear(index)); } );  
-  }
-  }
+        return bins;
+    }
+
+    public int getAndClear(int bin) {
+        return atomic(() -> bins[bin].getAndSet(0));
+    }
+
+    public void transferBins(Histogram that) {
+        // Assumed immutable as per specifications
+        int binsCount = Math.min(this.getSpan(), that.getSpan());
+
+        for (int k = 0; k < binsCount; ++k) {
+            final int bin = k;
+            atomic(() -> this.bins[bin].increment(that.getAndClear(bin)));
+        }
+    }
 }
-
