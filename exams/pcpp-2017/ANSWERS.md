@@ -15,7 +15,7 @@ state = x;
 ### 6.1
 * Describe a situation where the above does not achieve consensus.
 Check and state might change between
-Because of the volatile...read iterrupted
+Because of the volatile...read interrupted
 ### 6.2
 * Now consider the variant where the consensus method is declared synchronized. Which requirement for consensus protocols is violated by this solution? Give an example execution.
 
@@ -34,4 +34,4 @@ int consensus(int x) { // invariant: x > 0
         }   
     }
 ```
-because of the while loop it's going to hang
+Because of the while loop it's going to hang.

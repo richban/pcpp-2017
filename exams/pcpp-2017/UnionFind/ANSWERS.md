@@ -61,10 +61,10 @@ Testing class FineUnionFind ... passed
 Testing class WaitFreeUnionFind ... passed
 Testing class BogusFineUnionFind ... passed
 ```
-Results with 50 threads.
+Results with 16 threads.
 ```
 Testing class CoarseUnionFind ... passed
 Testing class FineUnionFind ... passed
 Testing class WaitFreeUnionFind ... passed
-Testing class BogusFineUnionFind ...
+Testing class BogusFineUnionFind ... deadlock
 ```

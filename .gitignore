@@ -1,6 +1,7 @@
 **/*.class
 **/*.ipynb
 **/*.zip
+**/*.pdf
 books/
 slides/
 course.materials/

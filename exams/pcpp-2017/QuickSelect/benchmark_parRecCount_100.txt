@@ -1,0 +1,4 @@
+# OS:   Mac OS X; 10.13.3; x86_64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 8 "cores"
+# Date: 2018-03-01T13:11:50+0100

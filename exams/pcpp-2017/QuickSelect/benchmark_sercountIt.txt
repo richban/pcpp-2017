@@ -1,0 +1,16 @@
+# OS:   Mac OS X; 10.13.3; x86_64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 8 "cores"
+# Date: 2018-03-01T11:26:47+0100
+ser-countIt                    100 1            55.2 ns      61.70     262144
+ser-countIt                    200 1           113.5 ns     126.88      65536
+ser-countIt                    400 1           231.7 ns     259.06      16384
+ser-countIt                    800 1           420.0 ns     469.55       4096
+ser-countIt                   1600 1           797.9 ns     892.14       1024
+ser-countIt                   3200 1          1506.1 ns    1683.89        256
+ser-countIt                   6400 1          2998.6 ns    3352.65         64
+ser-countIt                  12800 1          6223.0 ns    6957.60         16
+ser-countIt                  25600 1         13332.8 ns   14907.32          4
+ser-countIt                  51200 1         26660.1 ns   29809.23          2
+ser-countIt                 102400 1         53470.1 ns   59782.30          2
+ser-countIt                 204800 1        110832.9 ns  123916.02          2
