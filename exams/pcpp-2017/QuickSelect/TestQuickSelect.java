@@ -163,7 +163,77 @@ class TestQuickSelect {
     return quickCountParRec(arr, next_target, taskCount);
   }
 
-    public static int quickCountIt(int[] inp) {
+  public static int quickCountRecParStr(int[] inp, int target, int taskCount) {
+    final int p=inp[0], n=inp.length;
+    final int perTask = n / taskCount;
+    IntStream list_stream = Arrays.stream(inp);
+
+    List<Callable<Long>> tasks_count = new ArrayList<Callable<Long>>();
+
+    for (int t=0; t<taskCount; t++) {
+      final int from = perTask * t,
+        to = (t+1 == taskCount) ? n : perTask * (t+1);
+      tasks_count.add(() -> {
+          return list_stream.parallel().skip(from).limit(to).filter(i -> i < p).count();
+        });
+    }
+
+    int results = 0;
+
+    try {
+      List<Future<Long>> futures = executor.invokeAll(tasks_count);
+      for (Future<Long> fut : futures)
+        results += fut.get();
+        System.out.println(results);
+    } catch (InterruptedException | ExecutionException exn) {
+      System.out.println("Interrupted: " + exn);
+    }
+
+    if (results == target ) return p;
+
+    List<Callable<List<Integer>>> tasks = new ArrayList<>();
+    int next_target = -1;
+
+    if (results > target) {
+      next_target = target;
+      for (int t=0; t<taskCount; t++) {
+        final int from = perTask * t,
+          to = (t+1 == taskCount) ? n : perTask * (t+1);
+        tasks.add(() -> {
+            List<Integer> local_list = new ArrayList<>();
+            for (int i=from; i<to; i++)
+              if (inp[i]<p) local_list.add(inp[i]);
+            return local_list;
+          });
+      }
+    } else {
+      next_target = target-results-1;
+      for (int t=0; t<taskCount; t++) {
+        final int from = perTask * t,
+          to = (t+1 == taskCount) ? n : perTask * (t+1);
+        tasks.add(() -> {
+            List<Integer> local_list = new ArrayList<>();
+            for (int i=from; i<to; i++)
+              if (inp[i]>=p) local_list.add(inp[i]);
+            return local_list;
+          });
+      }
+    }
+
+    List<Integer> next_input = new ArrayList<>();
+    try {
+      List<Future<List<Integer>>> futures = executor.invokeAll(tasks);
+      for (Future<List<Integer>> fut : futures)
+        next_input.addAll(fut.get());
+    } catch (InterruptedException | ExecutionException exn) {
+      System.out.println("Interrupted: " + exn);
+    }
+
+    int[] arr = next_input.stream().mapToInt(Integer::intValue).toArray();
+    return quickCountParRec(arr, next_target, taskCount);
+  }
+
+  public static int quickCountIt(int[] inp) {
     int p=-1, count=0, n=inp.length;
     int target = n/2;
     do {
@@ -194,7 +264,8 @@ class TestQuickSelect {
   public static void main( String [] args ) {
     SystemInfo();
     int input_size = Integer.parseInt(args[0]);
-    SortingBenchmarks(input_size);
+    SortingBenchmarksTasks(input_size, 100);
+    // SortingBenchmarksSize(input_size, 32);
   }
 
   private static int[] SetupSort(int size) {
@@ -216,8 +287,7 @@ class TestQuickSelect {
     return a;
   }
 
-  private static void SortingBenchmarks(int input_size) {
-    int taskCount = 32;
+  private static void SortingBenchmarksTasks(int input_size, int taskCount) {
     final int a[] = SetupSort(input_size);
     for (int t = 1; t <= taskCount; t++) {
       final int tasks = t;
@@ -226,47 +296,59 @@ class TestQuickSelect {
              String.format("%3d", t),
              i -> quickCountParRec(a, a.length/2, tasks));
     }
-    // for (int size = 100; size <= input_size; size *= 2) {
-    //   final int a[] = SetupSort(size);
-    //   Mark8("serial sort",
-    //          String.format("%8d", size),
-    //          "1",
-    //          i -> medianSort(a));
-    // }
-    // for (int size = 100; size <= input_size; size *= 2) {
-    //   final int a[] = new int[size];
-    //   Mark8("parallel sort",
-    //         String.format("%8d", size),
-    //         "1",
-    //         i -> medianPSort(a));
-    // }
-    // for (int size = 100; size <= input_size; size *= 2) {
-    //   final int a[] = new int[size];
-    //   Mark8("serial quickSelect",
-    //         String.format("%8d", size),
-    //         "1",
-    //         i -> quickSelect(a));
-    // }
-    // for (int size = 100; size <= input_size; size *= 2) {
-    //   final int a[] = new int[size];
-    //   Mark8("ser countIt",
-    //         String.format("%8d", size),
-    //         "1",
-    //         i -> quickCountIt(a));
-    // }
-    // for (int size = 100; size <= input_size; size *= 2) {
-    //   final int a[] = new int[size];
-    //   Mark8("ser countRc",
-    //         String.format("%8d", size),
-    //         "1",
-    //         i -> quickCountRec(a,a.length/2));
-    // }
+
+  }
+
+  private static void SortingBenchmarksSize(int input_size, int taskCount) {
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = SetupSort(size);
+      Mark8("parallel countRc",
+             String.format("%8d", input_size),
+             String.format("%3d", taskCount),
+             i -> quickCountParRec(a, a.length/2, taskCount));
+    }
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = SetupSort(size);
+      Mark8("serial-sort",
+             String.format("%8d", size),
+             "1",
+             i -> medianSort(a));
+    }
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = new int[size];
+      Mark8("parallel-sort",
+            String.format("%8d", size),
+            "1",
+            i -> medianPSort(a));
+    }
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = new int[size];
+      Mark8("serial-quickSelect",
+            String.format("%8d", size),
+            "1",
+            i -> quickSelect(a));
+    }
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = new int[size];
+      Mark8("ser-countIt",
+            String.format("%8d", size),
+            "1",
+            i -> quickCountIt(a));
+    }
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = new int[size];
+      Mark8("ser-countRc",
+            String.format("%8d", size),
+            "1",
+            i -> quickCountRec(a,a.length/2));
+    }
   }
 
   public static double Mark8(String msg, String info, String taskCount,
                               IntToDoubleFunction f, int n, double minTime) {
     int count = 1, totalCount = 0;
     double dummy = 0.0, runningTime = 0.0, st = 0.0, sst = 0.0;
+    int size = Integer.parseInt(info.replaceAll("\\s+",""));
     do {
       count *= 2;
       st = sst = 0.0;
@@ -282,13 +364,13 @@ class TestQuickSelect {
         totalCount += count;
       }
     } while (runningTime < minTime && count < Integer.MAX_VALUE/2);
-    double mean = st/n, sdev = Math.sqrt((sst - mean*mean*n)/(n-1));
+    double mean = st/n/size, sdev = Math.sqrt((sst - mean*mean*n)/(n-1))/size;
     System.out.printf("%-25s %s %s %15.1f ns %10.2f %10d%n", msg, info, taskCount, mean, sdev, count);
     return dummy / totalCount;
   }
 
   public static double Mark8(String msg, String info, String taskCount, IntToDoubleFunction f) {
-    return Mark8(msg, info, taskCount, f, 10, 1);
+    return Mark8(msg, info, taskCount, f, 5, 1);
   }
 
   public static void SystemInfo() {
