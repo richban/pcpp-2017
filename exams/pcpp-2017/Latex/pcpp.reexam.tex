@@ -41,6 +41,14 @@
 
 \section{Question 1}
 
+What I have witnessed is that the Ser Sort performs that the worse from all of the other algorithms. The execution time is best for the SerCountRC, SerCountIt where the size of the throughput does not really affects the execution time.
+
+\begin{figure}
+  \includegraphics[width=0.7\textwidth]{benchmark.png}
+  \caption{Benchmark Test \textit{BenchMark}}
+  \label{fig:benchmark}
+\end{figure}
+
 \textit{Implementation - TestQuickSelect.java}
 
 I have parallelized \textit{quickCountRec()}  see the \textit{quickCountParRec()} method.
@@ -48,13 +56,82 @@ I have used tasks, as the exam outlined I divide the array equally into regions 
 
 Given this information, similarly the filtering of the regions is divided into different tasks. Because of the indexing of regions and for the sake of the implementation simplicity, each tasks has it's own local array where the filtering is happening and in the end each local array is concatenated in order. However this might not be an optimal solution and a more clever solution could be implemented by keeping the counts of each region at the counting stage.
 
+\textit{parallel-quickCountRec vs ser-countIt}
+
+\begin{lstlisting}[language=java]
+	# OS:   Mac OS X; 10.13.3; x86_64
+	# JVM:  Oracle Corporation; 1.8.0_144
+	# CPU:  null; 8 "cores"
+	# Date: 2018-03-01T13:20:31+0100
+parallel-countRc               100 4            13.4 ns      15.02       1024
+parallel-countRc               200 4            22.8 ns      25.52        512
+parallel-countRc               400 4            58.9 ns      65.92        256
+parallel-countRc               800 4            46.6 ns      52.10        256
+parallel-countRc              1600 4           336.6 ns     376.29         32
+parallel-countRc              3200 4           194.4 ns     217.38         64
+parallel-countRc              6400 4          1463.5 ns    1636.33          8
+parallel-countRc             12800 4          9903.6 ns   12897.89          2
+parallel-countRc             25600 4         25587.4 ns   28618.43          2
+parallel-countRc             51200 4          9046.8 ns   10117.24          2
+ser-countIt                    100 1            36.2 ns      40.50     524288
+ser-countIt                    200 1            79.5 ns      88.90      65536
+ser-countIt                    400 1           183.0 ns     204.62      16384
+ser-countIt                    800 1           332.8 ns     372.14       4096
+ser-countIt                   1600 1           606.7 ns     678.33       2048
+ser-countIt                   3200 1          1147.5 ns    1282.91        512
+ser-countIt                   6400 1          2261.7 ns    2528.89        128
+ser-countIt                  12800 1          4551.1 ns    5088.37         32
+ser-countIt                  25600 1          9282.8 ns   10379.30          8
+ser-countIt                  51200 1         18593.7 ns   20789.94          2
+\end{lstlisting}
+
+We can witness that the parallel implementation \textit{parallel-quickCountRec} is almost 3 times faster than the serial one. We can see that creating more than 4-5 tasks does not lead to better performance. The best results have been achieved with #4 of tasks. 
+
+\textit{Parallel solution - benchmarking for different number of tasks.}
+
+\begin{lstlisting}[language=java]
+parallel-countRc            500000   1          1028.8 ns    1150.52          4
+parallel-countRc            500000   2           726.8 ns     812.71          4
+parallel-countRc            500000   3           584.7 ns     653.69          4
+parallel-countRc            500000   4           586.5 ns     655.80          4
+parallel-countRc            500000   5           643.7 ns     719.68          4
+parallel-countRc            500000   6           602.7 ns     673.97          4
+parallel-countRc            500000   7           651.2 ns     728.48          4
+parallel-countRc            500000   8           639.2 ns     714.62          4
+parallel-countRc            500000   9           595.5 ns     665.83          4
+parallel-countRc            500000  10           595.9 ns     666.22          4
+parallel-countRc            500000  11           661.6 ns     739.71          4
+parallel-countRc            500000  12           648.3 ns     724.80          4
+parallel-countRc            500000  13           628.7 ns     702.88          4
+parallel-countRc            500000  14           624.8 ns     698.60          4
+parallel-countRc            500000  15           621.3 ns     694.66          4
+parallel-countRc            500000  16           667.8 ns     746.60          4
+parallel-countRc            500000  17           664.9 ns     743.42          4
+parallel-countRc            500000  18           678.7 ns     758.79          4
+parallel-countRc            500000  19           650.5 ns     727.39          4
+parallel-countRc            500000  20           647.0 ns     723.43          4
+parallel-countRc            500000  21           659.0 ns     737.03          4
+parallel-countRc            500000  22           645.7 ns     722.00          4
+parallel-countRc            500000  23           730.5 ns     816.77          4
+parallel-countRc            500000  24           716.1 ns     800.75          4
+parallel-countRc            500000  25           717.9 ns     802.95          4
+parallel-countRc            500000  26           729.8 ns     815.98          4
+parallel-countRc            500000  27           749.2 ns     837.63          4
+parallel-countRc            500000  28           740.0 ns     827.41          4
+parallel-countRc            500000  29           721.8 ns     807.15          4
+parallel-countRc            500000  30           726.7 ns     812.91          4
+parallel-countRc            500000  31           729.0 ns     815.16          4
+parallel-countRc            500000  32           722.7 ns     808.11          4
+\end{lstlisting}
 
 
 \section{Question 2}
 
+Implementation can be find in the files, however I was unable to implement it proberly due to stackoveflow errors.
+
 \section{Question 3}
 
-
+Oral discussion.
 
 \section{Question 4}
 

@@ -264,8 +264,8 @@ class TestQuickSelect {
   public static void main( String [] args ) {
     SystemInfo();
     int input_size = Integer.parseInt(args[0]);
-    SortingBenchmarksTasks(input_size, 100);
-    // SortingBenchmarksSize(input_size, 32);
+    // SortingBenchmarksTasks(input_size, 32);
+    SortingBenchmarksSize(input_size, 4);
   }
 
   private static int[] SetupSort(int size) {
@@ -303,7 +303,7 @@ class TestQuickSelect {
     for (int size = 100; size <= input_size; size *= 2) {
       final int a[] = SetupSort(size);
       Mark8("parallel countRc",
-             String.format("%8d", input_size),
+             String.format("%8d", size),
              String.format("%3d", taskCount),
              i -> quickCountParRec(a, a.length/2, taskCount));
     }
