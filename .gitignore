@@ -2,6 +2,10 @@
 **/*.ipynb
 **/*.zip
 **/*.pdf
+**/*.aux
+**/*.log
+**/*.tex
+**/*.png    
 books/
 slides/
 course.materials/
