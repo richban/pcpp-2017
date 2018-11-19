@@ -2,5 +2,6 @@
 **/*.ipynb
 **/*.zip
 books/
+exams/
 slides/
 course.materials/
