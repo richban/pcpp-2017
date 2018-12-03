@@ -28,8 +28,9 @@ public class TestStripedMap {
 
   public static void main(String[] args) {
     SystemInfo();
-    // testMap(new StripedWriteMap<Integer,String>(25, 5));
+    testMap(new StripedWriteMap<Integer,String>(25, 5));
     concurentTests(new StripedWriteMap<Integer,String>(77, 7));
+    concurentTests(new WrapConcurrentHashMap<Integer, String>());
   }
 
   private static void timeAllMaps() {
@@ -311,8 +312,6 @@ interface OurMap<K,V> {
   void reallocateBuckets();
 }
 
-
-
 // ----------------------------------------------------------------------
 // A hashmap that permits thread-safe concurrent operations, using
 // lock striping (intrinsic locks on Objects created for the purpose),
@@ -380,10 +379,9 @@ class StripedWriteMap<K,V> implements OurMap<K,V> {
     final ItemNode<K,V>[] bs = buckets;
     final int h = getHash(k), stripe = h % lockCount, hash = h % bs.length;
     Holder<V> holder = new Holder<V>();
-    if (sizes.get(stripe) != 0 && ItemNode.search(bs[hash], k, holder)) {
-        return holder.value;
-    }
-    return null;
+    boolean found = ItemNode.search(bs[hash], k, holder);
+    if (sizes.get(stripe) == 0 || !found) return null;
+    return holder.value;
   }
 
   public int size() {
@@ -403,12 +401,11 @@ class StripedWriteMap<K,V> implements OurMap<K,V> {
     final int h = getHash(k), stripe = h % lockCount;
     final Holder<V> old = new Holder<V>();
     ItemNode<K,V>[] bs;
-    int afterSize;
+    int afterSize = 0;
     synchronized (locks[stripe]) {
       bs = buckets;
       final int hash = h % bs.length;
-      final ItemNode<K,V> node = bs[hash],
-        newNode = ItemNode.delete(node, k, old);
+      final ItemNode<K,V> node = bs[hash], newNode = ItemNode.delete(node, k, old);
       bs[hash] = new ItemNode<K,V>(k, v, newNode);
       // Write for visibility; increment if k was not already in map
       afterSize = sizes.addAndGet(stripe, newNode == node ? 1 : 0);
@@ -424,27 +421,23 @@ class StripedWriteMap<K,V> implements OurMap<K,V> {
     final int hash = h % buckets.length;
     final Holder<V> old = new Holder<V>();
     synchronized (locks[stripe]) {
-      boolean node = ItemNode.search(buckets[hash], k, old);
-      if (node) {
-        return old.value;
-      } else {
-        return put(k, v);
-      }
+      if (ItemNode.search(buckets[hash], k, old)) return old.value;
     }
+    return put(k, v);
   }
 
   // Remove and return the value at key k if any, else return null
   public V remove(K k) {
     final int h = getHash(k), stripe = h % lockCount;
-    ItemNode<K,V>[] bs;
+    // ItemNode<K,V>[] bs;
     synchronized (locks[stripe]) {
-      bs = buckets;
-      final int hash = h % bs.length;
+      // bs = buckets;
+      final int hash = h % buckets.length;
       final Holder<V> old = new Holder<V>();
-      final ItemNode<K,V> bl = bs[hash];
+      // final ItemNode<K,V> bl = bs[hash];
       // if (ItemNode.search(bs[hash], k, old)) return null;
-      ItemNode<K,V> newNode = ItemNode.delete(bl, k, old);
-      bs[hash] = newNode;
+      ItemNode<K,V> newNode = ItemNode.delete(buckets[hash], k, old);
+      buckets[hash] = newNode;
       sizes.addAndGet(stripe, old.value == null ? 0 : -1);
       return old.value;
     }
