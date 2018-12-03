@@ -11,10 +11,25 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.function.IntToDoubleFunction;
 
+import java.util.concurrent.CyclicBarrier;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+
 public class TestStripedMap {
+  public static final int OPERATIONS_PER_THREAD = 100;
+
   public static void main(String[] args) {
     SystemInfo();
-    testMap(new StripedWriteMap<Integer,String>(25, 5));
+    // testMap(new StripedWriteMap<Integer,String>(25, 5));
+    concurentTests(new StripedWriteMap<Integer,String>(77, 7));
   }
 
   private static void timeAllMaps() {
@@ -150,6 +165,10 @@ public class TestStripedMap {
     testMap(new WrapConcurrentHashMap<Integer,String>());
   }
 
+  public static int parseThreadIndex(String value) {
+      return Integer.parseInt(value.substring(0, value.indexOf(':')));
+  }
+
   public static void concurentTests(final OurMap<Integer, String> map) {
     System.out.printf("Concurrent tests %n%s%n", map.getClass());
 
@@ -157,8 +176,72 @@ public class TestStripedMap {
     final int threadsCount = Runtime.getRuntime().availableProcessors() * 4;
     // use executor service
     ExecutorService executor = Executors.newWorkStealingPool(threadsCount);
-    // collection of futues
+    // collection of futures
     Collection<Future<long[]>> futures = new ArrayList<>(threadsCount);
+    CyclicBarrier barrier = new CyclicBarrier(threadsCount);
+
+    for(int i = 0; i < threadsCount; ++i) {
+      final int index = i;
+      futures.add(executor.submit(() -> {
+        long[] keySum = new long[threadsCount];
+        String t_name = Thread.currentThread().getName();
+        long seed = System.currentTimeMillis() + t_name.hashCode();
+        // Random Generator
+        IntStream randomInts = new Random(seed).ints(OPERATIONS_PER_THREAD);
+        // wait for all threads
+        barrier.await();
+        Iterator<Integer> iterator = randomInts.iterator();
+
+        while(iterator.hasNext()) {
+          int key = iterator.next();
+
+          switch (key % 4) {
+            case 0: {
+              map.containsKey(key);
+              break;
+            }
+            case 1: {
+              String result = map.put(key, index + ":" + key);
+              keySum[index] += key;
+              if (result != null) keySum[parseThreadIndex(result)] -= key;
+              break;
+            }
+            case 2: {
+              String result = map.putIfAbsent(key, index + ":" + key);
+              keySum[index] += result == null ? key : 0;
+              break;
+            }
+            case 3: {
+              String result = map.remove(key);
+              if (result != null) keySum[parseThreadIndex(result)] -= key;
+            }
+          }
+        }
+        return keySum;
+      }));
+    }
+
+    long[] threadsKeysSum = new long[threadsCount];
+    Arrays.fill(threadsKeysSum, 0);
+
+    for (Future<long[]> fut : futures) {
+      try {
+        long tLocalSum[] = fut.get();
+        for (int i = 0; i < threadsCount; ++i) {
+          threadsKeysSum[i] += tLocalSum[i];
+        }
+
+      } catch (InterruptedException | ExecutionException e) {
+        System.err.println("A thread was interrupted. Error!");
+      }
+    }
+
+    map.forEach((key, value) -> {
+      assert IntStream.range(0, threadsCount).anyMatch((k) -> value.equals(k + ":" + key));
+      threadsKeysSum[parseThreadIndex(value)] -= key;
+    });
+
+    assert IntStream.range(0, threadsCount).allMatch((k) -> threadsKeysSum[k] == 0);
   }
 
   // --- Benchmarking infrastructure ---
