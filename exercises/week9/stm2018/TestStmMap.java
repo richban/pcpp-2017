@@ -300,13 +300,15 @@ class StmMap<K,V> implements OurMap<K,V> {
   // This is good, because calling a consumer inside an atomic seems
   // suspicious.
   public void forEach(Consumer<K,V> consumer) {
-    final TxnRef<ItemNode<K,V>>[] bs = buckets.get();
+    final ItemNode<K,V> nodes = (ItemNode<K,V>[])new ItemNode[buckets.size()];
     atomic(() -> {
+      final TxnRef<ItemNode<K,V>>[] bs = buckets.get();
+      ItemNode<K,V> ns = (ItemNode<K,V>[])new ItemNode[bs.size()];
       for (int i = 0; i < bs.length; i++) {
-        final TxnRef<ItemNode<K,V>> node = bs[i];
+        ns[i] = bs[i].get();
       }
+      nodes = ns;
     });
-    ItemNode<K, V> nodes = node.get();
     while (nodes != null) {
         consumer.accept(nodes.k, nodes.v);
         nodes = nodes.next;
