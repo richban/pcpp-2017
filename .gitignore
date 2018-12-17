@@ -1,7 +1,13 @@
 **/*.class
 **/*.ipynb
 **/*.zip
+**/*.pdf
+**/*.aux
+**/*.log
+**/*.tex
+**/*.png    
 books/
 exams/
 slides/
 course.materials/
+.ipynb_checkpoints
