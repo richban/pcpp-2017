@@ -1,11 +1,10 @@
 **/*.class
-**/*.ipynb
 **/*.zip
 **/*.pdf
 **/*.aux
 **/*.log
-**/*.tex
-**/*.png    
+**/*.out
+**/*.png
 books/
 slides/
 course.materials/
