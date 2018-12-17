@@ -6,12 +6,18 @@ import java.util.HashMap;
 public class SesComSys {
     public static void main(String[] args) {
       final ActorSystem system = ActorSystem.create("SesComSys");
+      // Create Actor for Registry
       final ActorRef registry = system.actorOf(Props.create(RegistryActor.class), "Registry");
+      // Create Actor for Sender
       final ActorRef sender = system.actorOf(Props.create(SenderActor.class), "Sender");
+      // Create Actor for Receiver
       final ActorRef receiver = system.actorOf(Props.create(ReceiverActor.class), "Receiver");
 
+      // Initialize the Receiver
       receiver.tell(new InitMessage(registry), ActorRef.noSender());
+      // Initialize the Sender
       sender.tell(new InitMessage(registry), ActorRef.noSender());
+
       sender.tell(new CommMessage(receiver), ActorRef.noSender());
 
       try {
@@ -24,6 +30,9 @@ public class SesComSys {
       }
     }
 }
+
+// -- AUXILIARY METHODS ----------------------------------------
+
 
 class KeyPair implements Serializable {
     public final int public_key, private_key;
@@ -40,17 +49,19 @@ class Crypto {
         System.out.println("public key: " + public_key);
         System.out.println("private key: " + private_key);
         return new KeyPair(public_key, private_key);
+      }
+
+      static String encrypt(String cleartext, int key) {
+        StringBuffer encrypted = new StringBuffer();
+        for (int i=0; i<cleartext.length(); i++) {
+            encrypted.append((char) ('A' + ((((int)
+                cleartext.charAt(i)) - 'A' + key) % 26)));
+        }
+        return "" + encrypted;
+      }
 }
 
-  static String encrypt(String cleartext, int key) {
-      StringBuffer encrypted = new StringBuffer();
-      for (int i=0; i<cleartext.length(); i++) {
-          encrypted.append((char) ('A' + ((((int)
-              cleartext.charAt(i)) - 'A' + key) % 26)));
-      }
-      return "" + encrypted;
-  }
-}
+// -- MESSAGE ------------------------------------------------
 
 class InitMessage implements Serializable {
   public final ActorRef registry;
@@ -94,6 +105,8 @@ class Message implements Serializable {
     public final String s;
     public Message(String s) { this.s = s; }
 }
+
+// -- ACTOR --------------------------------------------------
 
 class SenderActor extends UntypedActor {
   public ActorRef registry;
