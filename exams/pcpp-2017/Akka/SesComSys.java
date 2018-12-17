@@ -61,7 +61,7 @@ class Crypto {
       }
 }
 
-// -- MESSAGE ------------------------------------------------
+// -- MESSAGES ------------------------------------------------
 
 class InitMessage implements Serializable {
   public final ActorRef registry;

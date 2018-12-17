@@ -1,0 +1,77 @@
+\documentclass[format=acmsmall, review=false, screen=true]{acmart}
+\settopmatter{printacmref=false} % Removes citation information below abstract
+\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with conference information in first column
+\pagestyle{plain} % removes running headers
+\acmYear{2018}
+\acmMonth{3}
+
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{subcaption}
+\usepackage{dirtytalk}
+
+\lstset{
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  frame=single,
+  breaklines=true,
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+  aboveskip=10pt,
+  belowskip=5pt,
+  tabsize=2
+}
+
+\setlength{\textfloatsep}{14pt}
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\belowcaptionskip}{4pt}
+
+\author{Richard Bányi}
+
+
+\title{\textsc{PCPP} - Exam 2018}
+\subtitle{\textsc{IT University of Copenhagen, Autumn 2018}}
+\acmDOI{}
+\begin{document}
+\maketitle
+
+\section{Question 1}
+
+\begin{figure}[H]
+  \includegraphics[width=0.7\textwidth]{benchmark.png}
+  \caption{Benchmark Test \textit{BenchMark}}
+  \label{fig:benchmark}
+\end{figure}
+
+
+\begin{lstlisting}[language=java]
+	# OS:   Mac OS X; 10.13.3; x86_64
+	# JVM:  Oracle Corporation; 1.8.0_144
+	# CPU:  null; 8 "cores"
+	# Date: 2018-03-01T13:20:31+0100
+\end{lstlisting}
+
+
+\section{Question 2}
+
+\section{Question 3}
+
+\section{Question 4}
+
+
+\begin{lstlisting}[language=java]
+synchronized (nodes[rx]) {}
+\end{lstlisting}
+
+\section{Question 5}
+
+\section{Question 6}
+
+
+\section{Question 7}
+
+\end{document}
