@@ -1,14 +1,15 @@
 import java.util.stream.*;
 import java.util.function.*;
+import java.util.Random;
 
 public class Runner {
     public static void main(String[] args) {
-        final int n = 100;
+        final int n = 10_000;
         testAccounts(new UnsafeAccounts(n), n);
-
-        final int numberOfTransactions = 1000;
-        applyTransactionsLoop(n, numberOfTransactions, () -> new UnsafeAccounts(n));
-        applyTransactionsCollect(n, numberOfTransactions, () -> new UnsafeAccounts(n));
+        concurrentTestQ1(new UnsafeAccounts(n), n);
+        // final int numberOfTransactions = 1000;
+        // applyTransactionsLoop(n, numberOfTransactions, () -> new UnsafeAccounts(n));
+        // applyTransactionsCollect(n, numberOfTransactions, () -> new UnsafeAccounts(n));
     }
 
     public static void testAccounts(Accounts accounts, final int n) {
@@ -44,6 +45,29 @@ public class Runner {
         System.out.printf(accounts.getClass() + " passed sequential tests\n");
     }
 
+    public static void concurrentTestQ1(Accounts accounts, final int n) {
+      if (n <= 2) {
+          System.out.println("Accounts must be larger that 2 for this test to work");
+          assert (false); // test only supports larger accounts that 2.
+          return;
+      }
+      assert (accounts.sumBalances() == 0);
+      Thread clerk1 = new Thread(() -> {
+        for (int i = 0; i < n; i++) {
+          accounts.deposit(i, 100);
+        }
+      });
+      Thread clerk2 = new Thread(() -> {
+        for (int i = 0; i < n; i++) {
+          accounts.deposit(i, -100);
+        }
+      });
+      clerk1.start(); clerk2.start();
+      // System.out.println(accounts.get(0));
+      try { clerk1.join(); clerk2.join(); } catch (InterruptedException exn) { }
+      System.out.println("Sum is " + accounts.sumBalances() + " and should be " + 0);
+    }
+
     // Question 1.7.1
     private static void applyTransactionsLoop(int numberOfAccounts, int numberOfTransactions,
             Supplier<Accounts> generator) {
@@ -54,7 +78,7 @@ public class Runner {
                 .mapToObj((i) -> new Transaction(numberOfAccounts, i));
         // implement applying each transaction by using a for-loop
         // Modify it to run with a parallel stream.
- // YOUR CODE GOES HERE 
+ // YOUR CODE GOES HERE
     }
 
     // Question 1.7.2
@@ -67,6 +91,6 @@ public class Runner {
 
         // Implement applying each transaction by using the collect stream operator.
         // Modify it to run with a parallel stream.
- // YOUR CODE GOES HERE 
+ // YOUR CODE GOES HERE
     }
 }

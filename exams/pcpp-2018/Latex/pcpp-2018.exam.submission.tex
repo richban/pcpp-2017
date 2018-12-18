@@ -41,13 +41,6 @@
 
 \section{Question 1}
 
-\begin{figure}[H]
-  \includegraphics[width=0.7\textwidth]{benchmark.png}
-  \caption{Benchmark Test \textit{BenchMark}}
-  \label{fig:benchmark}
-\end{figure}
-
-
 \begin{lstlisting}[language=java]
 # OS:   Mac OS X; 10.14.1; x86_64
 # JVM:  Oracle Corporation; 1.8.0_144
@@ -55,6 +48,47 @@
 # Date: 2018-12-18T15:50:23+0100
 \end{lstlisting}
 
+\begin{figure}[H]
+  \includegraphics[width=0.7\textwidth]{benchmark.png}
+  \caption{Benchmark Test \textit{BenchMark}}
+  \label{fig:benchmark}
+\end{figure}
+
+\subsection{Question 1.1}
+
+\textit{Implementation in Runner.java concurrentTestQ1(){}}. \emph{clerk1} deposits +100 \emph{n times - lenght of accounts}; and \emph{clerk2} deposits -100 also \emph{n times - lenght of accounts}; After that we check the balance of the accounts. The balance should be zero. However since the shared data is not \emph{synchronized} race conditions can occur, one thread could interrupt the other one. Therefore, the balance of the accounts is dependent on the thread scheduling algorithm. In order to obtain correct results the \emph{deposit} method needs to be synchronized.
+
+\begin{lstlisting}[language=java]
+final int n = 10_000_000;
+Sum is -3839200 and should be 0.
+Sum is -3839200 and should be 0.
+\end{lstlisting}
+
+However when \emph{n=1000} we get the expected balance 0. Since the whole \emph{deposit} loop in each thread is faster, the chance of them interleaving executions are much lower. This absolutely doesn't mean that the program always executes correctly.
+
+\begin{lstlisting}[language=java]
+final int n = 1000;
+Sum is 0 and should be 0.
+Sum is 0 and should be 0.
+\end{lstlisting}
+
+\begin{lstlisting}[language=java]
+      assert (accounts.sumBalances() == 0);
+      Thread clerk1 = new Thread(() -> {
+        for (int i = 0; i < n; i++) {
+          accounts.deposit(i, 100);
+        }
+      });
+      Thread clerk2 = new Thread(() -> {
+        for (int i = 0; i < n; i++) {
+          accounts.deposit(i, -100);
+        }
+      });
+      clerk1.start(); clerk2.start();
+      // System.out.println(accounts.get(0));
+      try { clerk1.join(); clerk2.join(); } catch (InterruptedException exn) { }
+      System.out.println("Sum is " + accounts.sumBalances() + " and should be " + 0);
+\end{lstlisting}
 
 \section{Question 2}
 
