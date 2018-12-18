@@ -4,9 +4,10 @@ import java.util.Random;
 
 public class Runner {
     public static void main(String[] args) {
-        final int n = 10_000;
+        final int n = 10_000_000;
         testAccounts(new UnsafeAccounts(n), n);
-        concurrentTestQ1(new UnsafeAccounts(n), n);
+        // concurrentTestQ1(new UnsafeAccounts(n), n);
+        concurrentTestQ2(new UnsafeAccounts(n), n);
         // final int numberOfTransactions = 1000;
         // applyTransactionsLoop(n, numberOfTransactions, () -> new UnsafeAccounts(n));
         // applyTransactionsCollect(n, numberOfTransactions, () -> new UnsafeAccounts(n));
@@ -66,6 +67,30 @@ public class Runner {
       // System.out.println(accounts.get(0));
       try { clerk1.join(); clerk2.join(); } catch (InterruptedException exn) { }
       System.out.println("Sum is " + accounts.sumBalances() + " and should be " + 0);
+    }
+
+    public static void concurrentTestQ2(Accounts accounts, final int n) {
+      if (n <= 2) {
+          System.out.println("Accounts must be larger that 2 for this test to work");
+          assert (false); // test only supports larger accounts that 2.
+          return;
+      }
+      assert (accounts.sumBalances() == 0);
+      final int counts = n;
+      Thread clerk1 = new Thread(() -> {
+        for (int i = 0; i < counts; i++) {
+          accounts.deposit(i, 1);
+        }
+      });
+      Thread clerk2 = new Thread(() -> {
+        for (int i = 0; i < counts; i++) {
+          accounts.deposit(i, 1);
+        }
+      });
+      clerk1.start(); clerk2.start();
+      // System.out.println(accounts.get(0));
+      try { clerk1.join(); clerk2.join(); } catch (InterruptedException exn) { }
+      System.out.println("Sum is " + accounts.sumBalances() + " and should be " + 2*counts);
     }
 
     // Question 1.7.1

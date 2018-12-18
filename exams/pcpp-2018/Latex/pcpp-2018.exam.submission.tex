@@ -90,6 +90,36 @@ Sum is 0 and should be 0.
       System.out.println("Sum is " + accounts.sumBalances() + " and should be " + 0);
 \end{lstlisting}
 
+\subsection{Question 1.2}
+
+\textit{Implementation in Runner.java concurrentTestQ2(){}}. Similiar approach as the previous one. Two threads \emph{clerk1, clerk2} run concurrently and each \emph{deposits +1} in each account. Again, one thread could interrupt the second one and \emph{deposit +1} the \emph{account} after the first has read the variable but before the second \emph{deposits} the value: this would result in a lost update of a account. That correct implementation would require to use \emph{synchronize} on the \emph{deposit} method. The \emph{synchronized} keyword on a method creates an exclusive lock on the object of \emph{accounts}. Since both threads are accessing the same instance of \emph{Accounts}, this locking will ensure mutual exclusion on the \emph{deposit} method, hence making the race condition that results in improper output impossible and moreover would ensure visibility. 
+
+\begin{lstlisting}[language=java]
+// cleark1 -> Deposit -> read 2 -> interrupted
+   // cleark2->Deposit-> read 2 -> account+1 -> write 3
+   						// cleark1 -> resumed -> account+1 -> write 3
+\end{lstlisting}
+
+
+	
+\begin{lstlisting}[language=java]
+      assert (accounts.sumBalances() == 0);
+      Thread clerk1 = new Thread(() -> {
+        for (int i = 0; i < n; i++) {
+          accounts.deposit(i, 100);
+        }
+      });
+      Thread clerk2 = new Thread(() -> {
+        for (int i = 0; i < n; i++) {
+          accounts.deposit(i, -100);
+        }
+      });
+      clerk1.start(); clerk2.start();
+      // System.out.println(accounts.get(0));
+      try { clerk1.join(); clerk2.join(); } catch (InterruptedException exn) { }
+      System.out.println("Sum is " + accounts.sumBalances() + " and should be " + 0);
+\end{lstlisting}
+
 \section{Question 2}
 
 Benchmarked on the following platform:
