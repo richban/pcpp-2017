@@ -1,0 +1,34 @@
+# OS:   Mac OS X; 10.14.1; x86_64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 8 "cores"
+# Date: 2018-12-18T15:50:23+0100
+n 5000000  seed 3445, bufLen 100  maxDepth 4  cutOff 4
+One Parallel                   Real time:     0.362 (    0.349) extract: 5000000
+One Parallel                   Real time:     0.141 (    0.128) extract: 2500000
+One Parallel                   Real time:     0.117 (    0.115) extract: 1666666
+One Parallel                   Real time:     0.151 (    0.108) extract: 1250000
+One Parallel                   Real time:     0.102 (    0.100) extract: 1000000
+One Parallel                   Real time:     0.126 (    0.123) extract: 833333
+One Parallel                   Real time:     0.141 (    0.140) extract: 714285
+One Parallel                   Real time:     0.102 (    0.101) extract: 625000
+One Parallel                   Real time:     0.133 (    0.132) extract: 555555
+One Parallel                   Real time:     0.118 (    0.117) extract: 500000
+One Parallel                   Real time:     0.101 (    0.100) extract: 454545
+One Parallel                   Real time:     0.105 (    0.104) extract: 416666
+One Parallel                   Real time:     0.123 (    0.122) extract: 384615
+One Parallel                   Real time:     0.129 (    0.128) extract: 357142
+One Parallel                   Real time:     0.161 (    0.161) extract: 333333
+One Parallel                   Real time:     0.101 (    0.100) extract: 312500
+One Parallel                   Real time:     0.103 (    0.103) extract: 294117
+One Parallel                   Real time:     0.099 (    0.098) extract: 277777
+One Parallel                   Real time:     0.100 (    0.100) extract: 263157
+One Parallel                   Real time:     0.099 (    0.098) extract: 250000
+One Parallel                   Real time:     0.104 (    0.104) extract: 238095
+One Parallel                   Real time:     0.097 (    0.097) extract: 227272
+One Parallel                   Real time:     0.098 (    0.098) extract: 217391
+One Parallel                   Real time:     0.101 (    0.101) extract: 208333
+One Parallel                   Real time:     0.098 (    0.097) extract: 200000
+One Parallel                   Real time:     0.127 (    0.127) extract: 192307
+One Parallel                   Real time:     0.130 (    0.130) extract: 185185
+One Parallel                   Real time:     0.125 (    0.125) extract: 178571
+One Parallel                   Real time:     0.126 (    0.126) extract: 172413
