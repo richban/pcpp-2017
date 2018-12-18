@@ -21,80 +21,20 @@ import java.util.concurrent.Future;
 
 
 class TestQuickSelect {
+  private static final ExecutorService executor = Executors.newCachedThreadPool();
 
-  private static final ExecutorService executor
-    = Executors.newCachedThreadPool();
-    // = Executors.newWorkStealingPool();
-
-  public static int medianSort(int[] inp) {
-    int w[] = Arrays.copyOf(inp, inp.length);
-    Arrays.sort(w);
-    return w[w.length/2];
-  }
-  public static int medianPSort(int[] inp) {
-    int w[] = Arrays.copyOf(inp, inp.length);
-    Arrays.parallelSort(w);
-    return w[w.length/2];
-  }
-
-  public static int partition(int[] w, int min, int max) {
-    int p = min; // use w[p] as pivot
-    int left=min+1, right = max-1;
-    while(left <= right) {
-      while( w[left] <= w[p] && left < right ) left++;
-      while( w[right] > w[p] && left <= right ) right--;
-      if(left >= right) break;
-      int t=w[left]; w[left]=w[right]; w[right]=t;
-    }
-    int t=w[p]; w[p]=w[right]; w[right]=t;
-    return right;
-  }
-
-  public static int quickSelect(int[] inp) {
-    int w[] = Arrays.copyOf(inp, inp.length);
-    return quickSelect(w,0,w.length,w.length/2);
-  }
-  public static int quickSelect(int[] w, int min, int max, int target) {
-    int p = partition(w,min,max);
-    if( p < target ) return quickSelect(w,p+1,max,target);
-    if( p > target ) return quickSelect(w,min,p,target);
-    return w[target]; // p==target
-  }
-
-  public static int quickSelectIt(int[] inp) {
-    int w[] = Arrays.copyOf(inp, inp.length);
-    int target = w.length/2;
-    int p = -1, min=0, max=w.length;
-    do{
-      p = partition(w,min,max);
-      if( p < target )  min=p+1;
-      if( p > target )  max=p;
-      //      System.out.println(" "+p+"   "+target);
-    } while(p!=target);
-    return w[p];
-  }
-
-  public static int quickCountRec(int[] inp, int target) {
-    final int p=inp[0], n=inp.length;
-    int  count=0;
-    for(int i=1;i<n;i++) if(inp[i]<p) count++;
-    if(count > target) {
-      int m[] = new int[count];
-      int j=0;
-      for(int i=1;i<n;i++) if(inp[i]<p) m[j++]=inp[i];
-      return quickCountRec(m,target);
-    }
-    if(count < target) {
-      int m[] = new int[n-count-1];
-      int j=0;
-      for(int i=1;i<n;i++) if(inp[i]>=p) m[j++]=inp[i];
-      return quickCountRec(m,target-count-1);
-    }
-    return p; // we are on target
+  public static void main( String [] args ) {
+    SystemInfo();
+    int input_size = Integer.parseInt(args[0]);
+    int threads = Integer.parseInt(args[1]);
+    // SortingBenchmarksQ1Size(input_size);
+    // SortingBenchmarksQ2Size(input_size, threads);
+    // SortingBenchmarksQ3Size(input_size, threads);
+    SortingBenchmarksTasks(input_size, 32);
   }
 
   public static int quickCountParRec(int[] inp, int target, int taskCount) {
-    final int p=inp[0], n=inp.length;
+    final int p = inp[0], n = inp.length;
     final int perTask = n / taskCount;
     List<Callable<Integer>> tasks_count = new ArrayList<Callable<Integer>>();
 
@@ -161,6 +101,75 @@ class TestQuickSelect {
 
     int[] arr = next_input.stream().mapToInt(Integer::intValue).toArray();
     return quickCountParRec(arr, next_target, taskCount);
+  }
+
+  public static int medianSort(int[] inp) {
+    int w[] = Arrays.copyOf(inp, inp.length);
+    Arrays.sort(w);
+    return w[w.length/2];
+  }
+
+  public static int medianPSort(int[] inp) {
+    int w[] = Arrays.copyOf(inp, inp.length);
+    Arrays.parallelSort(w);
+    return w[w.length/2];
+  }
+
+  public static int partition(int[] w, int min, int max) {
+    int p = min; // use w[p] as pivot
+    int left=min+1, right = max-1;
+    while(left <= right) {
+      while( w[left] <= w[p] && left < right ) left++;
+      while( w[right] > w[p] && left <= right ) right--;
+      if(left >= right) break;
+      int t=w[left]; w[left]=w[right]; w[right]=t;
+    }
+    int t=w[p]; w[p]=w[right]; w[right]=t;
+    return right;
+  }
+
+  public static int quickSelect(int[] inp) {
+    int w[] = Arrays.copyOf(inp, inp.length);
+    return quickSelect(w,0,w.length,w.length/2);
+  }
+
+  public static int quickSelect(int[] w, int min, int max, int target) {
+    int p = partition(w,min,max);
+    if( p < target ) return quickSelect(w,p+1,max,target);
+    if( p > target ) return quickSelect(w,min,p,target);
+    return w[target]; // p==target
+  }
+
+  public static int quickSelectIt(int[] inp) {
+    int w[] = Arrays.copyOf(inp, inp.length);
+    int target = w.length/2;
+    int p = -1, min=0, max=w.length;
+    do{
+      p = partition(w,min,max);
+      if( p < target )  min=p+1;
+      if( p > target )  max=p;
+      //      System.out.println(" "+p+"   "+target);
+    } while(p!=target);
+    return w[p];
+  }
+
+  public static int quickCountRec(int[] inp, int target) {
+    final int p=inp[0], n=inp.length;
+    int  count=0;
+    for(int i=1;i<n;i++) if(inp[i]<p) count++;
+    if(count > target) {
+      int m[] = new int[count];
+      int j=0;
+      for(int i=1;i<n;i++) if(inp[i]<p) m[j++]=inp[i];
+      return quickCountRec(m,target);
+    }
+    if(count < target) {
+      int m[] = new int[n-count-1];
+      int j=0;
+      for(int i=1;i<n;i++) if(inp[i]>=p) m[j++]=inp[i];
+      return quickCountRec(m,target-count-1);
+    }
+    return p; // we are on target
   }
 
   public static int quickCountRecParStr(int[] inp, int target, int taskCount) {
@@ -261,13 +270,6 @@ class TestQuickSelect {
     return p; // we are on target
   }
 
-  public static void main( String [] args ) {
-    SystemInfo();
-    int input_size = Integer.parseInt(args[0]);
-    // SortingBenchmarksTasks(input_size, 32);
-    SortingBenchmarksSize(input_size, 4);
-  }
-
   private static int[] SetupSort(int size) {
     final int a[] = new int[size];
     Random rnd = new Random();
@@ -296,10 +298,68 @@ class TestQuickSelect {
              String.format("%3d", t),
              i -> quickCountParRec(a, a.length/2, tasks));
     }
+  }
+
+  private static void SortingBenchmarksQ1Size(int input_size) {
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = SetupSort(size);
+      Mark8("serial-sort",
+             String.format("%8d", size),
+             "#",
+             i -> medianSort(a));
+    }
+
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = new int[size];
+      Mark8("parallel-sort",
+            String.format("%8d", size),
+            "#",
+            i -> medianPSort(a));
+    }
+
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = new int[size];
+      Mark8("serial-quickSelect",
+            String.format("%8d", size),
+            "#",
+            i -> quickSelect(a));
+    }
+
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = new int[size];
+      Mark8("quickSelectIt",
+            String.format("%8d", size),
+            "#",
+            i -> quickSelectIt(a));
+    }
+
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = new int[size];
+      Mark8("ser-countRc",
+            String.format("%8d", size),
+            "#",
+            i -> quickCountRec(a,a.length/2));
+    }
+
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = new int[size];
+      Mark8("ser-countIt",
+            String.format("%8d", size),
+            "#",
+            i -> quickCountIt(a));
+    }
 
   }
 
-  private static void SortingBenchmarksSize(int input_size, int taskCount) {
+  private static void SortingBenchmarksQ2Size(int input_size, int taskCount) {
+    for (int size = 100; size <= input_size; size *= 2) {
+      final int a[] = new int[size];
+      Mark8("quickSelectIt",
+            String.format("%8d", size),
+            "#",
+            i -> quickSelectIt(a));
+    }
+
     for (int size = 100; size <= input_size; size *= 2) {
       final int a[] = SetupSort(size);
       Mark8("parallel countRc",
@@ -307,40 +367,22 @@ class TestQuickSelect {
              String.format("%3d", taskCount),
              i -> quickCountParRec(a, a.length/2, taskCount));
     }
-    for (int size = 100; size <= input_size; size *= 2) {
-      final int a[] = SetupSort(size);
-      Mark8("serial-sort",
-             String.format("%8d", size),
-             "1",
-             i -> medianSort(a));
-    }
-    for (int size = 100; size <= input_size; size *= 2) {
-      final int a[] = new int[size];
-      Mark8("parallel-sort",
-            String.format("%8d", size),
-            "1",
-            i -> medianPSort(a));
-    }
-    for (int size = 100; size <= input_size; size *= 2) {
-      final int a[] = new int[size];
-      Mark8("serial-quickSelect",
-            String.format("%8d", size),
-            "1",
-            i -> quickSelect(a));
-    }
-    for (int size = 100; size <= input_size; size *= 2) {
-      final int a[] = new int[size];
-      Mark8("ser-countIt",
-            String.format("%8d", size),
-            "1",
-            i -> quickCountIt(a));
-    }
-    for (int size = 100; size <= input_size; size *= 2) {
-      final int a[] = new int[size];
-      Mark8("ser-countRc",
-            String.format("%8d", size),
-            "1",
-            i -> quickCountRec(a,a.length/2));
+  }
+
+  private static void SortingBenchmarksQ3Size(int input_size, int threads) {
+    final int b[] = new int[input_size];
+    Mark8("quickSelectIt",
+          String.format("%8d", input_size),
+          "#",
+          i -> quickSelectIt(b));
+
+    for (int numberOfTasks = 1; numberOfTasks <= threads; numberOfTasks++) {
+      final int a[] = SetupSort(input_size);
+      final int task_num = numberOfTasks;
+      Mark8("parallel countRc",
+             String.format("%8d", input_size),
+             String.format("%3d", numberOfTasks),
+             i -> quickCountParRec(a, a.length/2, task_num));
     }
   }
 
@@ -365,12 +407,12 @@ class TestQuickSelect {
       }
     } while (runningTime < minTime && count < Integer.MAX_VALUE/2);
     double mean = st/n/size, sdev = Math.sqrt((sst - mean*mean*n)/(n-1))/size;
-    System.out.printf("%-25s %s %s %15.1f ns %10.2f %10d%n", msg, info, taskCount, mean, sdev, count);
+    System.out.printf("%-25s %s %10s %15.1f ns %10.2f %10d%n", msg, info, taskCount, mean, sdev, count);
     return dummy / totalCount;
   }
 
   public static double Mark8(String msg, String info, String taskCount, IntToDoubleFunction f) {
-    return Mark8(msg, info, taskCount, f, 5, 1);
+    return Mark8(msg, info, taskCount, f, 10, 1.0);
   }
 
   public static void SystemInfo() {
