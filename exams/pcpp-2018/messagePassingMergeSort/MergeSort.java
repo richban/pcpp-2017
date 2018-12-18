@@ -5,7 +5,7 @@
 
 import java.io.*;
 import akka.actor.*;
-import java.util.Random;
+import java.util.*;
 
 
 public class MergeSort {
@@ -66,7 +66,7 @@ class SorterActor extends UntypedActor {
       if (arrToSort.length > 1) {
         ActorRef merger = getContext().actorOf(Props.create(MergerActor.class), "Merger");
         merger.tell(new CallerMessage(s.caller), ActorRef.noSender());
-        System.out.println("Spawn Left/Right Sorter;");
+        // System.out.println("Spawn Left/Right Sorter;");
         left = getContext().actorOf(Props.create(SorterActor.class), "left");
         right = getContext().actorOf(Props.create(SorterActor.class), "right");
 
@@ -91,10 +91,14 @@ class SorterActor extends UntypedActor {
 class MergerActor extends UntypedActor {
   ActorRef caller;
   int[] left;
-  int[] a;
 
-  private int[] merge(int[] l, int[] r, int left, int right) {
+
+  private int[] merge(int[] l, int[] r) {
+    int[] a  = new int[l.length+r.length];
+    int left = l.length;
+    int right = r.length;
     int i = 0, j = 0, k = 0;
+
     while (i < left && j < right) {
       if (l[i] <= r[j]) {
         a[k++] = l[i++];
@@ -125,7 +129,8 @@ class MergerActor extends UntypedActor {
         left = l.result;
       } else {
         SortedMessage r = ((SortedMessage) o);
-        int[] result = merge(left, r.result, left.length, r.result.length);
+        int[] result = merge(left, r.result);
+        System.out.println("Merged: " + Arrays.toString(result));
         caller.tell(new SortedMessage(result), ActorRef.noSender());
         getContext().stop(getSelf()); // die!
       }
@@ -138,11 +143,7 @@ class TestActor extends UntypedActor {
   public final int arr[] = { 6, 5, 3, 1, 8, 7, 2, 4 };
 
   public static void printArray(int arr[]) {
-    int n = arr.length;
-    System.out.print("RESULT: ");
-    for (int i=0; i<n; ++i) {
-      System.out.print(arr[i] + " ");
-    }
+    System.out.println("RESULT: " + Arrays.toString(arr));
   }
 
   public void onReceive(Object o) throws Exception {
