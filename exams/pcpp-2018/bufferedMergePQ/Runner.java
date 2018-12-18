@@ -1,4 +1,4 @@
-import java.util.function.Function;  
+import java.util.function.Function;
 import java.util.Random;
 import java.util.Arrays;
 
@@ -14,8 +14,8 @@ public class Runner {
     public static void main(String[] args) {
         final int seed = useArg(args,0,45678);
         final int n = useArg(args,1,10_000_000);
-        final int extractFract = useArg(args,2,4);       
-        
+        final int extractFract = useArg(args,2,4);
+
         final int bufLen = useArg(args,3,20);
         final int maxDepth = useArg(args,99,4);
         final int cutOff = 4;
@@ -23,24 +23,57 @@ public class Runner {
         final int extract = n / extractFract;
 
         // keep only what you need when you create a file with your experimental results
-        System.out.printf("n %d  s %d, extract %d  bufLen %d  maxDepth %d  cutOff %d%n",n,seed,extract,bufLen,maxDepth,cutOff);
+        System.out.printf("n %d  seed %d, extract %d  bufLen %d  maxDepth %d  cutOff %d%n",n,seed,extract,bufLen,maxDepth,cutOff);
         SystemInfo();
-        
+
         int[] a = generateRandom(n,seed); // useful to be able to compare output of the different implementations
+
+
+        // ----------------------------------------------------------------------
+        // TESTING One Serial vs. One Parallel on small n
+        // timePQ(a,extract,(x)-> new OneBufferPQ       (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,  null)),                "One Serial");
+        // timePQ(a,extract,(x)-> new OneBufferPQ       (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,true,   null)),                "One Parallel");
+
+
+        // ----------------------------------------------------------------------
+        // TESTING One Serial vs. One Parallel
+
+        // System.out.printf("n %d  seed %d, bufLen %d  maxDepth %d  cutOff %d%n",n,seed,bufLen,maxDepth,cutOff);
+
+        // for(int count = 1; count < 30; count++){
+        //   final int extract = n / count;
+        //   int[] a = generateRandom(n,seed); // useful to be able to compare output of the different implementations
+        //   timePQ(a,extract,(x)-> new OneBufferPQ       (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,  null)),                "One Serial");
+        // }
+
+        // for(int count = 1; count < 30; count++){
+        //   final int extract = n / count;
+        //   int[] a = generateRandom(n,seed); // useful to be able to compare output of the different implementations
+        //   timePQ(a,extract,(x)-> new OneBufferPQ       (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,true,   null)),                "One Parallel");
+        // }
+
         //        int[] a = new int[n]; for(int i=0;i<n;i++) a[i] = n-i;
+        // timePQ(a,extract,(x)-> new OneBufferPQ       (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,true,   null)),                "One Parallel");
 
-        timePQ(a,extract,(x)-> new OneBufferPQ       (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,  null)),                "One Serial");
-        timePQ(a,extract,(x)-> new OneBufferPQ       (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,true,   null)),                "One Parallel");
+        // ----------------------------------------------------------------------
+        // TESTING SerialPQPair
 
-        timePQ(a,extract,(x)-> new BufferedPQ        (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,  new SerialPQPair())),  "BufferedPQ Ser/Serial");
+        // System.out.printf("n %d  seed %d, bufLen %d  maxDepth %d  cutOff %d%n",n,seed,bufLen,maxDepth,cutOff);
+        // for(int count = 1; count < 30; count++){
+        //   final int extract = n / count;
+        //   int[] a = generateRandom(n,seed); // useful to be able to compare output of the different implementations
+        //   timePQ(a,extract,(x)-> new BufferedPQ        (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,  new SerialPQPair())),  "BufferedPQ Ser/Serial");
+        // }
+
+        // timePQ(a,extract,(x)-> new BufferedPQ        (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,  new SerialPQPair())),  "BufferedPQ Ser/Serial");
 
         // // the following works if you happen to come up with something that looks like my solution; you can try to do this or you can adjust the calls -- up to you
-        // timePQ(a,extract,(x)-> new BufferedPQ        (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,  new ParallelPQPair())),"BufferedPQ Par/Serial");
+        timePQ(a,extract,(x)-> new BufferedPQ        (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,  new ParallelPQPair())),"BufferedPQ Par/Serial");
         // timePQ(a,extract,(x)-> new BufferedPQ        (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,true,new SerialPQPair())),  "BufferedPQ Ser/Parallel");
         // timePQ(a,extract,(x)-> new BufferedPQ        (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,true,new ParallelPQPair())),"BufferedPQ Par/Parallel");
         // timePQ(a,extract,(x)-> new BufferedPQSolution(new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,  new SerialPQPair())),  "Solution Ser/Serial");
         // timePQ(a,extract,(x)-> new BufferedPQSolution(new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,true,new SerialPQPair())),  "Solution Par/Serial");
-        
+
         // timePQ(a,extract,(x)-> new BoundedBufferMerge(new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth, false ,new ParallelPQPair())),"Merge Par/Par");
         // timePQ(a,extract,(x)-> new BoundedBufferThreadMerge(new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,new SerialPQPair())),"Merge Thread");
     }
@@ -48,7 +81,7 @@ public class Runner {
     // in the following, there are some things that I found very useful for debugging.  Adjust to what you need -- or kick it out if it gets in the way
     private static void timePQ(int[] data, int extractLen, Function<int[],PQ> myPQconstr,String display) {
         Timer t = new Timer();
-        //  printArray(data);
+        // printArray(data);
 
         int [] x = data.clone();
         // printArray(x);
@@ -56,7 +89,7 @@ public class Runner {
         // printArray(x);
 
         PQ queue = myPQconstr.apply(data);
-        //System.out.println("----------");
+        // System.out.println("----------");
         // queue.print(0);
         // try {
         //     Thread.sleep(10);
@@ -69,16 +102,19 @@ public class Runner {
         double ti = t.check();
         //        System.out.printf("(%9.3f)%n", ti);
         int[] result = getSortedElementsFromPQ(queue, extractLen); //data.length/4);
-        
+
         double time = t.check();
 
         assert(checkIsSorted(result));
-        System.out.printf("%d ",result[result.length-1]); // &0xff);
-        //        printArray(result);
-        //queue.print(0);
+        // System.out.printf("%d ",result[result.length-1]); // &0xff);
+        // System.out.println(queue.peek());
+        // System.out.println(result.length);
+        // printArray(result);
+        // queue.print(0);
+        // System.out.println(queue.isEmpty());
         queue.shutDown();
-        
-        System.out.printf("%-30s Real time: %9.3f (%9.3f)%n", display, time,ti);
+
+        System.out.printf("%-30s Real time: %9.3f (%9.3f) extract: %5d%n", display, time,ti, extractLen);
     }
 
     // generate an array of size random elements
@@ -90,7 +126,7 @@ public class Runner {
         }
         return a;
     }
-    
+
     // check if a is sorted in increasing order.
     private static boolean checkIsSorted(int[] a) {
         int last = a[0];
@@ -112,7 +148,7 @@ public class Runner {
             //queue.print(0);
             i++;
         }
-        
+
         return a;
     }
 

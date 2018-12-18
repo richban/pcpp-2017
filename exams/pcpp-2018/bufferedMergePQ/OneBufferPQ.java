@@ -9,7 +9,18 @@ public class OneBufferPQ implements PQ {
         param = p;
         int [] inp = p.input;
         int l=p.left; int r=p.right; int buflen= p.bufLen; int d = p.depth;
+
+        // System.out.println(r);
+        // System.out.println(l);
+        // System.out.println(buflen);
+
         buffer = new int[1+r - l];
+
+        // System.out.println(buffer.length);
+        // System.out.println(inp.length);
+
+        // System.out.println(Arrays.toString(buffer));
+
         for (int i = 0; i < r - l; i++) {
             buffer[i] = inp[l + i];
         }
@@ -18,7 +29,7 @@ public class OneBufferPQ implements PQ {
             Arrays.parallelSort(buffer);
         } else {
             Arrays.sort(buffer);
-        }            
+        }
         current=0;
     }
 
