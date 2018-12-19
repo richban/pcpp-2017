@@ -1,0 +1,444 @@
+\documentclass[format=acmsmall, review=false, screen=true]{acmart}
+\settopmatter{printacmref=false} % Removes citation information below abstract
+\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with conference information in first column
+\pagestyle{plain} % removes running headers
+\acmYear{2018}
+\acmMonth{3}
+
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{subcaption}
+\usepackage{dirtytalk}
+
+\lstset{
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  frame=single,
+  breaklines=true,
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+  aboveskip=10pt,
+  belowskip=5pt,
+  tabsize=2
+}
+
+\setlength{\textfloatsep}{14pt}
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\belowcaptionskip}{4pt}
+
+\author{Richard Bányi}
+
+
+\title{\textsc{PCPP} - Exam 2018}
+\subtitle{\textsc{IT University of Copenhagen, Autumn 2018}}
+\acmDOI{}
+\begin{document}
+\maketitle
+
+\section{Question 1}
+
+\begin{lstlisting}[language=java]
+# OS:   Mac OS X; 10.14.1; x86_64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 8 "cores"
+# Date: 2018-12-18T15:50:23+0100
+\end{lstlisting}
+
+\begin{figure}[H]
+  \includegraphics[width=0.7\textwidth]{benchmark.png}
+  \caption{Benchmark Test \textit{BenchMark}}
+  \label{fig:benchmark}
+\end{figure}
+
+\subsection{Question 1.1}
+
+\textit{Implementation in Runner.java concurrentTestQ1(){}}. \emph{clerk1} deposits +100 \emph{n times - lenght of accounts}; and \emph{clerk2} deposits -100 also \emph{n times - lenght of accounts}; After that we check the balance of the accounts. The balance should be zero. However since the shared data is not \emph{synchronized} race conditions can occur, one thread could interrupt the other one. Therefore, the balance of the accounts is dependent on the thread scheduling algorithm. In order to obtain correct results the \emph{deposit} method needs to be synchronized.
+
+\begin{lstlisting}[language=java]
+final int n = 10_000_000;
+Sum is -3839200 and should be 0.
+Sum is -3839200 and should be 0.
+\end{lstlisting}
+
+However when \emph{n=1000} we get the expected balance 0. Since the whole \emph{deposit} loop in each thread is faster, the chance of them interleaving executions are much lower. This absolutely doesn't mean that the program always executes correctly.
+
+\begin{lstlisting}[language=java]
+final int n = 1000;
+Sum is 0 and should be 0.
+Sum is 0 and should be 0.
+\end{lstlisting}
+
+\begin{lstlisting}[language=java]
+      assert (accounts.sumBalances() == 0);
+      Thread clerk1 = new Thread(() -> {
+        for (int i = 0; i < n; i++) {
+          accounts.deposit(i, 100);
+        }
+      });
+      Thread clerk2 = new Thread(() -> {
+        for (int i = 0; i < n; i++) {
+          accounts.deposit(i, -100);
+        }
+      });
+      clerk1.start(); clerk2.start();
+      // System.out.println(accounts.get(0));
+      try { clerk1.join(); clerk2.join(); } catch (InterruptedException exn) { }
+      System.out.println("Sum is " + accounts.sumBalances() + " and should be " + 0);
+\end{lstlisting}
+
+\subsection{Question 1.2}
+
+\textit{Implementation in Runner.java concurrentTestQ2(){}}. Similiar approach as the previous one. Two threads \emph{clerk1, clerk2} run concurrently and each \emph{deposits +1} in each account. Again, one thread could interrupt the second one and \emph{deposit +1} the \emph{account} after the first has read the variable but before the second \emph{deposits} the value: this would result in a lost update of a account. That correct implementation would require to use \emph{synchronize} on the \emph{deposit} method. The \emph{synchronized} keyword on a method creates an exclusive lock on the object of \emph{accounts}. Since both threads are accessing the same instance of \emph{Accounts}, this locking will ensure mutual exclusion on the \emph{deposit} method, hence making the race condition that results in improper output impossible and moreover would ensure visibility.
+
+\begin{lstlisting}[language=java]
+// cleark1 -> Deposit -> read 2 -> interrupted
+   // cleark2->Deposit-> read 2 -> account+1 -> write 3
+   						// cleark1 -> resumed -> account+1 -> write 3
+\end{lstlisting}
+	
+\begin{lstlisting}[language=java]
+      assert (accounts.sumBalances() == 0);
+      Thread clerk1 = new Thread(() -> {
+        for (int i = 0; i < n; i++) {
+          accounts.deposit(i, 100);
+        }
+      });
+      Thread clerk2 = new Thread(() -> {
+        for (int i = 0; i < n; i++) {
+          accounts.deposit(i, -100);
+        }
+      });
+      clerk1.start(); clerk2.start();
+      // System.out.println(accounts.get(0));
+      try { clerk1.join(); clerk2.join(); } catch (InterruptedException exn) { }
+      System.out.println("Sum is " + accounts.sumBalances() + " and should be " + 0);
+\end{lstlisting}
+
+\subsection{Question 1.3}
+
+\textit{Implementation in LockAccount.java}. A separate lock for every \emph{account} was implemented by having an array of lock Objects as large as the \emph{acconts}. The size of the \emph{locks} array is kept consistent with the number of \emph{accounts} - they are declared as \emph{final}. This approach results in bigger memory footprint. The other approach could have been to lock on the accounts itself.
+
+This implementation passes both tests from Q1.1 and Q1.2:
+
+\begin{lstlisting}[language=java]
+class LockAccounts passed sequential tests
+Sum is 0 and should be 0
+Sum is 20000000 and should be 20000000
+
+class LockAccounts passed sequential tests
+Sum is 0 and should be 0
+Sum is 20000000 and should be 20000000
+
+class LockAccounts passed sequential tests
+Sum is 0 and should be 0
+Sum is 60000000 and should be 60000000
+\end{lstlisting}
+
+\emph{Transfer}: Locks both accounts in a consistent order (using unique Account serial numbers) before the transfer and so is thread-safe (does not lose updates, does not allow observation in the middle of a transfer) and deadlock-free.
+
+Explain a situation where the reported sum could be inconsistent??
+
+\subsection{Question 1.4}
+
+\textit{Implementation in LockAccountsFast.java}.
+
+\subsection{Question 1.5}
+
+\textit{Implementation in STMAccounts.java}.
+
+Using one large transaction to compute the \emph{sumBalances} results to higher chances that the transcation will fail and be rolledback and restarted. On the other hand using transactions for each account gives smaller transactions a thus less likelihood that the transaction fails. However, in this case the \emph{sumBalances} might return inconsistent data.
+
+Both Q1.1 and Q1.2 tests passes.
+
+\begin{lstlisting}[language=java]
+Dec 19, 2018 8:03:36 AM org.multiverse.api.GlobalStmInstance <clinit>
+INFO: Initializing GlobalStmInstance using factoryMethod 'org.multiverse.stms.gamma.GammaStm.createFast'.
+Dec 19, 2018 8:03:36 AM org.multiverse.api.GlobalStmInstance <clinit>
+INFO: Successfully initialized GlobalStmInstance using factoryMethod 'org.multiverse.stms.gamma.GammaStm.createFast'.
+Sum is 0 and should be 0
+Sum is 20000000 and should be 20000000
+
+Dec 19, 2018 8:04:39 AM org.multiverse.api.GlobalStmInstance <clinit>
+INFO: Initializing GlobalStmInstance using factoryMethod 'org.multiverse.stms.gamma.GammaStm.createFast'.
+Dec 19, 2018 8:04:39 AM org.multiverse.api.GlobalStmInstance <clinit>
+INFO: Successfully initialized GlobalStmInstance using factoryMethod 'org.multiverse.stms.gamma.GammaStm.createFast'.
+Sum is 0 and should be 0
+Sum is 4000000 and should be 4000000
+\end{lstlisting}
+
+\section{Question 2}
+
+Benchmarked on the following platform:
+
+\begin{lstlisting}[language=java]
+# OS:   Mac OS X; 10.14.1; x86_64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 8 "cores"
+# Date: 2018-12-18T15:50:23+0100
+\end{lstlisting}
+
+\subsection{Question 2.1: Warmup: Benchmarking the Naive Implementation}
+
+
+\textbf{One Serial vs One Parallel}
+
+\emph{One Parallel} is almost 4x times faster than \emph{One serial}. This makes sense since \emph{parallelSort} uses threads - each thread gets a chunk of the list and sorts it in parallel. Even the overhead of parallelization is small on small \emph{n}.
+
+\begin{lstlisting}[language=java]
+n 100  seed 3445, extract 50  bufLen 10  maxDepth 4  cutOff 4
+# OS:   Mac OS X; 10.14.1; x86_64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 8 "cores"
+# Date: 2018-12-18T17:43:03+0100
+One Serial                     Real time:     0.001 (    0.001) extract:    50
+One Parallel                   Real time:     0.000 (    0.000) extract:    50
+\end{lstlisting}
+
+\begin{lstlisting}[language=java]
+n 5000000  seed 3445, bufLen 100  maxDepth 4  cutOff 4
+One Serial                     Real time:     0.539 (    0.486) extract: 5000000
+One Serial                     Real time:     0.476 (    0.465) extract: 2500000
+One Serial                     Real time:     0.441 (    0.436) extract: 1666666
+One Serial                     Real time:     0.422 (    0.420) extract: 1250000
+One Serial                     Real time:     0.420 (    0.418) extract: 1000000
+One Serial                     Real time:     0.422 (    0.421) extract: 833333
+One Serial                     Real time:     0.422 (    0.420) extract: 714285
+One Serial                     Real time:     0.438 (    0.436) extract: 625000
+One Serial                     Real time:     0.439 (    0.437) extract: 555555
+One Serial                     Real time:     0.419 (    0.418) extract: 500000
+One Serial                     Real time:     0.458 (    0.457) extract: 454545
+One Serial                     Real time:     0.420 (    0.420) extract: 416666
+One Serial                     Real time:     0.465 (    0.429) extract: 384615
+One Serial                     Real time:     0.419 (    0.419) extract: 357142
+One Serial                     Real time:     0.431 (    0.430) extract: 333333
+One Serial                     Real time:     0.429 (    0.428) extract: 312500
+One Serial                     Real time:     0.422 (    0.421) extract: 294117
+One Serial                     Real time:     0.438 (    0.438) extract: 277777
+One Serial                     Real time:     0.443 (    0.442) extract: 263157
+One Serial                     Real time:     0.436 (    0.436) extract: 250000
+One Serial                     Real time:     0.425 (    0.425) extract: 238095
+One Serial                     Real time:     0.419 (    0.418) extract: 227272
+One Serial                     Real time:     0.426 (    0.424) extract: 217391
+One Serial                     Real time:     0.421 (    0.421) extract: 208333
+One Serial                     Real time:     0.421 (    0.421) extract: 200000
+One Serial                     Real time:     0.422 (    0.422) extract: 192307
+One Serial                     Real time:     0.424 (    0.423) extract: 185185
+One Serial                     Real time:     0.418 (    0.418) extract: 178571
+One Serial                     Real time:     0.419 (    0.419) extract: 172413
+\end{lstlisting}
+
+\begin{lstlisting}[language=java]
+n 5000000  seed 3445, bufLen 100  maxDepth 4  cutOff 4
+One Parallel                   Real time:     0.362 (    0.349) extract: 5000000
+One Parallel                   Real time:     0.141 (    0.128) extract: 2500000
+One Parallel                   Real time:     0.117 (    0.115) extract: 1666666
+One Parallel                   Real time:     0.151 (    0.108) extract: 1250000
+One Parallel                   Real time:     0.102 (    0.100) extract: 1000000
+One Parallel                   Real time:     0.126 (    0.123) extract: 833333
+One Parallel                   Real time:     0.141 (    0.140) extract: 714285
+One Parallel                   Real time:     0.102 (    0.101) extract: 625000
+One Parallel                   Real time:     0.133 (    0.132) extract: 555555
+One Parallel                   Real time:     0.118 (    0.117) extract: 500000
+One Parallel                   Real time:     0.101 (    0.100) extract: 454545
+One Parallel                   Real time:     0.105 (    0.104) extract: 416666
+One Parallel                   Real time:     0.123 (    0.122) extract: 384615
+One Parallel                   Real time:     0.129 (    0.128) extract: 357142
+One Parallel                   Real time:     0.161 (    0.161) extract: 333333
+One Parallel                   Real time:     0.101 (    0.100) extract: 312500
+One Parallel                   Real time:     0.103 (    0.103) extract: 294117
+One Parallel                   Real time:     0.099 (    0.098) extract: 277777
+One Parallel                   Real time:     0.100 (    0.100) extract: 263157
+One Parallel                   Real time:     0.099 (    0.098) extract: 250000
+One Parallel                   Real time:     0.104 (    0.104) extract: 238095
+One Parallel                   Real time:     0.097 (    0.097) extract: 227272
+One Parallel                   Real time:     0.098 (    0.098) extract: 217391
+One Parallel                   Real time:     0.101 (    0.101) extract: 208333
+One Parallel                   Real time:     0.098 (    0.097) extract: 200000
+One Parallel                   Real time:     0.127 (    0.127) extract: 192307
+One Parallel                   Real time:     0.130 (    0.130) extract: 185185
+One Parallel                   Real time:     0.125 (    0.125) extract: 178571
+One Parallel                   Real time:     0.126 (    0.126) extract: 172413
+\end{lstlisting}
+
+By increasing the \emph{buffLen}, the results showed that \emph{One Parralel} is 7x more faster than \emph{One Serial}. This confirms, that \emph{One Parralel} sorting on a multicore machine can achieve much better performance on more elements.
+
+\begin{lstlisting}[language=java]
+n 5000000  seed 3445, bufLen 10000  maxDepth 4  cutOff 4
+One Serial                     Real time:     0.744 (    0.692) extract: 5000000
+One Serial                     Real time:     0.482 (    0.473) extract: 2500000
+One Serial                     Real time:     0.470 (    0.465) extract: 1666666
+One Serial                     Real time:     0.421 (    0.419) extract: 1250000
+One Serial                     Real time:     0.431 (    0.430) extract: 1000000
+One Serial                     Real time:     0.428 (    0.427) extract: 833333
+One Serial                     Real time:     0.426 (    0.425) extract: 714285
+One Serial                     Real time:     0.444 (    0.442) extract: 625000
+One Serial                     Real time:     0.446 (    0.444) extract: 555555
+One Serial                     Real time:     0.431 (    0.431) extract: 500000
+One Serial                     Real time:     0.418 (    0.417) extract: 454545
+One Serial                     Real time:     0.416 (    0.416) extract: 416666
+One Serial                     Real time:     0.419 (    0.418) extract: 384615
+One Serial                     Real time:     0.421 (    0.421) extract: 357142
+One Serial                     Real time:     0.421 (    0.420) extract: 333333
+One Serial                     Real time:     0.417 (    0.417) extract: 312500
+One Serial                     Real time:     0.418 (    0.417) extract: 294117
+One Serial                     Real time:     0.433 (    0.432) extract: 277777
+One Serial                     Real time:     0.437 (    0.437) extract: 263157
+One Serial                     Real time:     0.435 (    0.434) extract: 250000
+One Serial                     Real time:     0.431 (    0.431) extract: 238095
+One Serial                     Real time:     0.418 (    0.417) extract: 227272
+One Serial                     Real time:     0.453 (    0.451) extract: 217391
+One Serial                     Real time:     0.418 (    0.418) extract: 208333
+One Serial                     Real time:     0.417 (    0.417) extract: 200000
+One Serial                     Real time:     0.414 (    0.414) extract: 192307
+One Serial                     Real time:     0.416 (    0.416) extract: 185185
+One Serial                     Real time:     0.428 (    0.428) extract: 178571
+One Serial                     Real time:     0.419 (    0.419) extract: 172413
+One Parallel                   Real time:     0.153 (    0.146) extract: 5000000
+One Parallel                   Real time:     0.107 (    0.103) extract: 2500000
+One Parallel                   Real time:     0.110 (    0.107) extract: 1666666
+One Parallel                   Real time:     0.123 (    0.122) extract: 1250000
+One Parallel                   Real time:     0.132 (    0.129) extract: 1000000
+One Parallel                   Real time:     0.138 (    0.135) extract: 833333
+One Parallel                   Real time:     0.136 (    0.133) extract: 714285
+One Parallel                   Real time:     0.134 (    0.131) extract: 625000
+One Parallel                   Real time:     0.109 (    0.108) extract: 555555
+One Parallel                   Real time:     0.105 (    0.104) extract: 500000
+One Parallel                   Real time:     0.105 (    0.105) extract: 454545
+One Parallel                   Real time:     0.110 (    0.109) extract: 416666
+One Parallel                   Real time:     0.104 (    0.104) extract: 384615
+One Parallel                   Real time:     0.105 (    0.105) extract: 357142
+One Parallel                   Real time:     0.107 (    0.107) extract: 333333
+One Parallel                   Real time:     0.104 (    0.104) extract: 312500
+One Parallel                   Real time:     0.104 (    0.104) extract: 294117
+One Parallel                   Real time:     0.106 (    0.105) extract: 277777
+One Parallel                   Real time:     0.118 (    0.118) extract: 263157
+One Parallel                   Real time:     0.108 (    0.107) extract: 250000
+One Parallel                   Real time:     0.109 (    0.108) extract: 238095
+One Parallel                   Real time:     0.108 (    0.107) extract: 227272
+One Parallel                   Real time:     0.140 (    0.140) extract: 217391
+One Parallel                   Real time:     0.107 (    0.107) extract: 208333
+One Parallel                   Real time:     0.106 (    0.106) extract: 200000
+One Parallel                   Real time:     0.109 (    0.109) extract: 192307
+One Parallel                   Real time:     0.109 (    0.108) extract: 185185
+One Parallel                   Real time:     0.106 (    0.106) extract: 178571
+One Parallel                   Real time:     0.129 (    0.128) extract: 172413
+\end{lstlisting}
+
+Experiments on \emph{BufferedPQ Ser/Serial } with different \emph{cutOff} parameters ranging from 1-4 showed similiar performance results. By increasing the \emph{bufLen=}...Still sorting an array there is no paraleziation .... 
+
+\begin{lstlisting}[language=java]
+n 5000000  seed 3445, bufLen 100  maxDepth 4  cutOff 2
+BufferedPQ Ser/Serial          Real time:     0.795 (    0.389) extract: 5000000
+BufferedPQ Ser/Serial          Real time:     0.560 (    0.341) extract: 2500000
+BufferedPQ Ser/Serial          Real time:     0.429 (    0.333) extract: 1666666
+BufferedPQ Ser/Serial          Real time:     0.390 (    0.320) extract: 1250000
+BufferedPQ Ser/Serial          Real time:     0.455 (    0.342) extract: 1000000
+BufferedPQ Ser/Serial          Real time:     0.368 (    0.321) extract: 833333
+BufferedPQ Ser/Serial          Real time:     0.358 (    0.319) extract: 714285
+BufferedPQ Ser/Serial          Real time:     0.359 (    0.323) extract: 625000
+BufferedPQ Ser/Serial          Real time:     0.351 (    0.320) extract: 555555
+BufferedPQ Ser/Serial          Real time:     0.353 (    0.323) extract: 500000
+BufferedPQ Ser/Serial          Real time:     0.365 (    0.333) extract: 454545
+BufferedPQ Ser/Serial          Real time:     0.371 (    0.340) extract: 416666
+BufferedPQ Ser/Serial          Real time:     0.344 (    0.322) extract: 384615
+BufferedPQ Ser/Serial          Real time:     0.387 (    0.365) extract: 357142
+BufferedPQ Ser/Serial          Real time:     0.356 (    0.337) extract: 333333
+BufferedPQ Ser/Serial          Real time:     0.336 (    0.317) extract: 312500
+BufferedPQ Ser/Serial          Real time:     0.338 (    0.320) extract: 294117
+BufferedPQ Ser/Serial          Real time:     0.336 (    0.321) extract: 277777
+BufferedPQ Ser/Serial          Real time:     0.334 (    0.319) extract: 263157
+BufferedPQ Ser/Serial          Real time:     0.337 (    0.323) extract: 250000
+BufferedPQ Ser/Serial          Real time:     0.334 (    0.321) extract: 238095
+BufferedPQ Ser/Serial          Real time:     0.335 (    0.322) extract: 227272
+BufferedPQ Ser/Serial          Real time:     0.339 (    0.324) extract: 217391
+BufferedPQ Ser/Serial          Real time:     0.353 (    0.338) extract: 208333
+BufferedPQ Ser/Serial          Real time:     0.358 (    0.343) extract: 200000
+BufferedPQ Ser/Serial          Real time:     0.353 (    0.340) extract: 192307
+BufferedPQ Ser/Serial          Real time:     0.329 (    0.318) extract: 185185
+BufferedPQ Ser/Serial          Real time:     0.330 (    0.320) extract: 178571
+BufferedPQ Ser/Serial          Real time:     0.328 (    0.318) extract: 172413
+\end{lstlisting}
+
+\begin{lstlisting}[language=java]
+n 5000000  seed 3445, bufLen 100  maxDepth 4  cutOff 4
+BufferedPQ Ser/Serial          Real time:     0.815 (    0.403) extract: 5000000
+BufferedPQ Ser/Serial          Real time:     0.549 (    0.337) extract: 2500000
+BufferedPQ Ser/Serial          Real time:     0.427 (    0.333) extract: 1666666
+BufferedPQ Ser/Serial          Real time:     0.397 (    0.326) extract: 1250000
+BufferedPQ Ser/Serial          Real time:     0.437 (    0.337) extract: 1000000
+BufferedPQ Ser/Serial          Real time:     0.367 (    0.320) extract: 833333
+BufferedPQ Ser/Serial          Real time:     0.365 (    0.324) extract: 714285
+BufferedPQ Ser/Serial          Real time:     0.363 (    0.328) extract: 625000
+BufferedPQ Ser/Serial          Real time:     0.352 (    0.321) extract: 555555
+BufferedPQ Ser/Serial          Real time:     0.351 (    0.323) extract: 500000
+BufferedPQ Ser/Serial          Real time:     0.354 (    0.325) extract: 454545
+BufferedPQ Ser/Serial          Real time:     0.370 (    0.337) extract: 416666
+BufferedPQ Ser/Serial          Real time:     0.374 (    0.352) extract: 384615
+BufferedPQ Ser/Serial          Real time:     0.349 (    0.329) extract: 357142
+BufferedPQ Ser/Serial          Real time:     0.388 (    0.368) extract: 333333
+BufferedPQ Ser/Serial          Real time:     0.341 (    0.322) extract: 312500
+BufferedPQ Ser/Serial          Real time:     0.336 (    0.320) extract: 294117
+BufferedPQ Ser/Serial          Real time:     0.336 (    0.320) extract: 277777
+BufferedPQ Ser/Serial          Real time:     0.332 (    0.318) extract: 263157
+BufferedPQ Ser/Serial          Real time:     0.335 (    0.320) extract: 250000
+BufferedPQ Ser/Serial          Real time:     0.359 (    0.345) extract: 238095
+BufferedPQ Ser/Serial          Real time:     0.359 (    0.345) extract: 227272
+BufferedPQ Ser/Serial          Real time:     0.343 (    0.330) extract: 217391
+BufferedPQ Ser/Serial          Real time:     0.352 (    0.340) extract: 208333
+BufferedPQ Ser/Serial          Real time:     0.371 (    0.356) extract: 200000
+BufferedPQ Ser/Serial          Real time:     0.419 (    0.404) extract: 192307
+BufferedPQ Ser/Serial          Real time:     0.398 (    0.383) extract: 185185
+BufferedPQ Ser/Serial          Real time:     0.370 (    0.359) extract: 178571
+BufferedPQ Ser/Serial          Real time:     0.430 (    0.415) extract: 172413
+\end{lstlisting}
+
+\subsection{Question 2.2: Parallel Initialisation}
+
+\textit{Implementation: ParallelPQPair.java}.
+
+The implementation of \emph{ParallelPQPair} is done by \emph{tasks}. A task is created for each \textit{left, right PQ} recursive data structure.
+
+\section{Question 3: Message Passing}
+
+\textit{Implementation: MergeSort.java}
+
+I have successfully implemeted the MergeSort algorithm via JAVA+AKKA. The results of three distincs runs can be seen below:
+
+\begin{lstlisting}[language=java]
+
+Merged: [7, 8]
+Merged: [5, 6]
+Merged: [2, 4]
+Merged: [2, 4, 7, 8]
+Merged: [1, 3]
+Merged: [1, 3, 5, 6]
+Merged: [1, 2, 3, 4, 5, 6, 7, 8]
+RESULT: [1, 2, 3, 4, 5, 6, 7, 8]
+
+Merged: [7, 8]
+Merged: [5, 6]
+Merged: [2, 4]
+Merged: [2, 4, 7, 8]
+Merged: [1, 3]
+Merged: [1, 3, 5, 6]
+Merged: [1, 2, 3, 4, 5, 6, 7, 8]
+RESULT: [1, 2, 3, 4, 5, 6, 7, 8]
+
+Merged: [5, 6]
+Merged: [7, 8]
+Merged: [1, 3]
+Merged: [1, 3, 5, 6]
+Merged: [2, 4]
+Merged: [2, 4, 7, 8]
+Merged: [1, 2, 3, 4, 5, 6, 7, 8]
+RESULT: [1, 2, 3, 4, 5, 6, 7, 8]
+
+\end{lstlisting}
+
+
+
+\end{document}

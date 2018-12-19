@@ -1,0 +1,34 @@
+# OS:   Mac OS X; 10.14.1; x86_64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 8 "cores"
+# Date: 2018-12-18T17:14:37+0100
+n 5000000  seed 3445, bufLen 100  maxDepth 4  cutOff 3
+BufferedPQ Ser/Serial          Real time:     0.791 (    0.384) extract: 5000000
+BufferedPQ Ser/Serial          Real time:     0.577 (    0.364) extract: 2500000
+BufferedPQ Ser/Serial          Real time:     0.427 (    0.331) extract: 1666666
+BufferedPQ Ser/Serial          Real time:     0.391 (    0.320) extract: 1250000
+BufferedPQ Ser/Serial          Real time:     0.433 (    0.336) extract: 1000000
+BufferedPQ Ser/Serial          Real time:     0.364 (    0.318) extract: 833333
+BufferedPQ Ser/Serial          Real time:     0.405 (    0.364) extract: 714285
+BufferedPQ Ser/Serial          Real time:     0.376 (    0.340) extract: 625000
+BufferedPQ Ser/Serial          Real time:     0.357 (    0.325) extract: 555555
+BufferedPQ Ser/Serial          Real time:     0.381 (    0.349) extract: 500000
+BufferedPQ Ser/Serial          Real time:     0.362 (    0.328) extract: 454545
+BufferedPQ Ser/Serial          Real time:     0.369 (    0.337) extract: 416666
+BufferedPQ Ser/Serial          Real time:     0.368 (    0.347) extract: 384615
+BufferedPQ Ser/Serial          Real time:     0.343 (    0.324) extract: 357142
+BufferedPQ Ser/Serial          Real time:     0.342 (    0.323) extract: 333333
+BufferedPQ Ser/Serial          Real time:     0.342 (    0.323) extract: 312500
+BufferedPQ Ser/Serial          Real time:     0.334 (    0.318) extract: 294117
+BufferedPQ Ser/Serial          Real time:     0.335 (    0.319) extract: 277777
+BufferedPQ Ser/Serial          Real time:     0.351 (    0.332) extract: 263157
+BufferedPQ Ser/Serial          Real time:     0.359 (    0.345) extract: 250000
+BufferedPQ Ser/Serial          Real time:     0.335 (    0.321) extract: 238095
+BufferedPQ Ser/Serial          Real time:     0.330 (    0.318) extract: 227272
+BufferedPQ Ser/Serial          Real time:     0.336 (    0.324) extract: 217391
+BufferedPQ Ser/Serial          Real time:     0.349 (    0.335) extract: 208333
+BufferedPQ Ser/Serial          Real time:     0.352 (    0.337) extract: 200000
+BufferedPQ Ser/Serial          Real time:     0.350 (    0.337) extract: 192307
+BufferedPQ Ser/Serial          Real time:     0.353 (    0.343) extract: 185185
+BufferedPQ Ser/Serial          Real time:     0.325 (    0.315) extract: 178571
+BufferedPQ Ser/Serial          Real time:     0.328 (    0.318) extract: 172413

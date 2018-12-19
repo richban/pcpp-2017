@@ -17,7 +17,9 @@ import java.util.concurrent.CyclicBarrier;
 public class TestMSQueue extends Tests{
   public static void main(String[] args) throws Exception {
     sequentialTest(new MSQueue<Integer>());
-    parallelTest(new MSQueue<Integer>(), 10);
+    parallelTest(new MSQueue<Integer>(),  Integer.parseInt(args[0]));
+    parallelTest(new MSQueueRefl<Integer>(),  Integer.parseInt(args[0]));
+    parallelTest(new LockingQueue<Integer>(),  Integer.parseInt(args[0]));
   }
 
   private static void sequentialTest(UnboundedQueue<Integer> bq) throws Exception {
@@ -32,13 +34,13 @@ public class TestMSQueue extends Tests{
   }
 
   private static void parallelTest(UnboundedQueue<Integer> bq, int nThreads) throws Exception {
-    long startTime = System.currentTimeMillis();
     System.out.printf("%nParallel test: %s", bq.getClass());
     final ExecutorService pool = Executors.newCachedThreadPool();
-    new PutTakeTest(bq, nThreads, 100000).test(pool);
+    long startTime = System.currentTimeMillis();
+    new PutTakeTest(bq, nThreads, 100_000).test(pool);
     pool.shutdown();
-    System.out.println("... passed");
-    long endTime   = System.currentTimeMillis();
+    long endTime = System.currentTimeMillis();
+    System.out.println("...passed");
     long totalTime = endTime - startTime;
     System.out.println(totalTime);
   }
@@ -116,6 +118,13 @@ class PutTakeTest extends Tests {
   }
 
   class Consumer implements Runnable {
+    private boolean isPrime(int n) {
+      int k = 2;
+      while (k * k <= n && n % k != 0)
+        k++;
+      return n >= 2 && k * k > n;
+    }
+
     public void run() {
       try {
         startBarrier.await();
@@ -126,6 +135,7 @@ class PutTakeTest extends Tests {
             item = bq.dequeue();
           }
           sum += item;
+          isPrime(item);
         }
         takeSum.getAndAdd(sum);
         stopBarrier.await();
@@ -224,7 +234,7 @@ class MSQueue<T> implements UnboundedQueue<T> {
   public T dequeue() { // from head
     while (true) {
       Node<T> first = head.get(), last = tail.get(), next = first.next.get(); // D3
-      if (first == head.get()) {        // D5
+      // if (first == head.get()) {        // D5
         if (first == last) {
           if (next == null)
             return null;
@@ -235,7 +245,7 @@ class MSQueue<T> implements UnboundedQueue<T> {
           if (head.compareAndSet(first, next)) // D13
             return result;
         }
-      }
+      // }
     }
   }
 

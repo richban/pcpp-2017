@@ -1,0 +1,16 @@
+# OS:   Mac OS X; 10.13.3; x86_64
+# JVM:  Oracle Corporation; 1.8.0_144
+# CPU:  null; 8 "cores"
+# Date: 2018-03-01T09:57:46+0100
+serial-quickSelect             100 1            13.2 ns      14.77    1048576
+serial-quickSelect             200 1            28.3 ns      31.64     262144
+serial-quickSelect             400 1            51.0 ns      57.06      65536
+serial-quickSelect             800 1            89.9 ns     100.55      16384
+serial-quickSelect            1600 1           163.4 ns     182.88       4096
+serial-quickSelect            3200 1           337.4 ns     377.47       1024
+serial-quickSelect            6400 1           667.8 ns     746.72        256
+serial-quickSelect           12800 1          1301.1 ns    1456.30         64
+serial-quickSelect           25600 1          2498.4 ns    2793.44         16
+serial-quickSelect           51200 1          5182.2 ns    5800.03          8
+serial-quickSelect          102400 1         10190.7 ns   11395.33          2
+serial-quickSelect          204800 1         20176.4 ns   22559.41          2

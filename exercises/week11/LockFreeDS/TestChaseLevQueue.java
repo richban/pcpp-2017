@@ -15,13 +15,13 @@ public class TestChaseLevQueue {
   // ----------------------------------------------------------------------
   // Version E: Multi-queue multi-thread setup SOLUTION, thread-local queues
 
-  @SuppressWarnings("unchecked") 
+  @SuppressWarnings("unchecked")
   private static void multiQueueMultiThreadCL(final int threadCount) {
-    // Java's @$#@?!! type system requires this unsafe cast 
-    ChaseLevDeque<SortTask>[] queues 
+    // Java's @$#@?!! type system requires this unsafe cast
+    ChaseLevDeque<SortTask>[] queues
       = (ChaseLevDeque<SortTask>[])(new ChaseLevDeque[threadCount]);
-    for (int t=0; t<threadCount; t++) 
-      queues[t] = new ChaseLevDeque<SortTask>(100000);
+    for (int t=0; t<threadCount; t++)
+      queues[t] = new ChaseLevDeque<SortTask>(100_000);
     int[] arr = IntArrayUtil.randomIntArray(size);
     queues[0].push(new SortTask(arr, 0, arr.length-1));
     Timer t = new Timer();
@@ -42,29 +42,29 @@ public class TestChaseLevQueue {
         while (null != (task = getTask(myNumber, queues, ongoing))) {
           final int[] arr = task.arr;
           final int a = task.a, b = task.b;
-          if (a < b) { 
+          if (a < b) {
             int i = a, j = b;
-            int x = arr[(i+j) / 2];         
-            do {                            
-              while (arr[i] < x) i++;       
-              while (arr[j] > x) j--;       
+            int x = arr[(i+j) / 2];
+            do {
+              while (arr[i] < x) i++;
+              while (arr[j] > x) j--;
               if (i <= j) {
                 swap(arr, i, j);
                 i++; j--;
-              }                             
-            } while (i <= j); 
+              }
+            } while (i <= j);
             ongoing.add(2);
-            queues[myNumber].push(new SortTask(arr, a, j)); 
-            queues[myNumber].push(new SortTask(arr, i, b));               
+            queues[myNumber].push(new SortTask(arr, a, j));
+            queues[myNumber].push(new SortTask(arr, i, b));
           }
           ongoing.decrement();
         }
       });
-    } 
-    for (int t=0; t<threadCount; t++) 
+    }
+    for (int t=0; t<threadCount; t++)
       threads[t].start();
     try {
-      for (int t=0; t<threadCount; t++) 
+      for (int t=0; t<threadCount; t++)
         threads[t].join();
     } catch (InterruptedException exn) { }
   }
@@ -78,16 +78,16 @@ public class TestChaseLevQueue {
   // try to steal, cyclically, from other threads and if that fails
   // wait a moment, while some tasks are computing.
 
-  private static SortTask getTask(final int myNumber, final Deque<SortTask>[] queues, 
+  private static SortTask getTask(final int myNumber, final Deque<SortTask>[] queues,
                                   LongAdder ongoing) {
     final int threadCount = queues.length;
     SortTask task = queues[myNumber].pop();
-    if (null != task) 
+    if (null != task)
       return task;
     else {
       do {
-        for (int t=0; t<threadCount-1; t++) 
-          if (null != (task = queues[(myNumber+t) % threadCount].steal())) 
+        for (int t=0; t<threadCount-1; t++)
+          if (null != (task = queues[(myNumber+t) % threadCount].steal()))
             return task;
         Thread.yield();
       } while (ongoing.longValue() > 0);
@@ -97,7 +97,7 @@ public class TestChaseLevQueue {
 }
 
 // ----------------------------------------------------------------------
-// SortTask class, Deque<T> interface, SimpleDeque<T> 
+// SortTask class, Deque<T> interface, SimpleDeque<T>
 
 // Represents the task of sorting arr[a..b]
 class SortTask {
@@ -105,7 +105,7 @@ class SortTask {
   public final int a, b;
 
   public SortTask(int[] arr, int a, int b) {
-    this.arr = arr; 
+    this.arr = arr;
     this.a = a;
     this.b = b;
   }
@@ -139,9 +139,9 @@ class ChaseLevDeque<T> implements Deque<T> {
     this.items = makeArray(size);
   }
 
-  @SuppressWarnings("unchecked") 
+  @SuppressWarnings("unchecked")
   private static <T> T[] makeArray(int size) {
-    // Java's @$#@?!! type system requires this unsafe cast    
+    // Java's @$#@?!! type system requires this unsafe cast
     return (T[])new Object[size];
   }
 
@@ -151,7 +151,7 @@ class ChaseLevDeque<T> implements Deque<T> {
 
   public void push(T item) { // at bottom
     final long b = bottom, t = top.get(), size = b - t;
-    if (size == items.length) 
+    if (size == items.length)
       throw new RuntimeException("queue overflow");
     items[index(b, items.length)] = item;
     bottom = b+1;
@@ -185,7 +185,7 @@ class ChaseLevDeque<T> implements Deque<T> {
       T result = items[index(t, items.length)];
       if (top.compareAndSet(t, t+1))
         return result;
-      else 
+      else
         return null;
     }
   }
