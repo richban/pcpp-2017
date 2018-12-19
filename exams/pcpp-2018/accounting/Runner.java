@@ -12,7 +12,9 @@ public class Runner {
         // testAccounts(new LockAccounts(n), n);
         // concurrentTestQ1(new LockAccounts(n), n);
         // concurrentTestQ2(new LockAccounts(n), n);
-        deadlockTestQ3(new LockAccounts(100), 100);
+        // deadlockTestQ3(new LockAccounts(100), 100);
+        concurrentTestQ2(new LockAccountsFast(n, 2), n);
+
         // final int numberOfTransactions = 1000;
         // applyTransactionsLoop(n, numberOfTransactions, () -> new UnsafeAccounts(n));
         // applyTransactionsCollect(n, numberOfTransactions, () -> new UnsafeAccounts(n));
