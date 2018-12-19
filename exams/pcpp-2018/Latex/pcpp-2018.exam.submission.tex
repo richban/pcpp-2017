@@ -92,15 +92,13 @@ Sum is 0 and should be 0.
 
 \subsection{Question 1.2}
 
-\textit{Implementation in Runner.java concurrentTestQ2(){}}. Similiar approach as the previous one. Two threads \emph{clerk1, clerk2} run concurrently and each \emph{deposits +1} in each account. Again, one thread could interrupt the second one and \emph{deposit +1} the \emph{account} after the first has read the variable but before the second \emph{deposits} the value: this would result in a lost update of a account. That correct implementation would require to use \emph{synchronize} on the \emph{deposit} method. The \emph{synchronized} keyword on a method creates an exclusive lock on the object of \emph{accounts}. Since both threads are accessing the same instance of \emph{Accounts}, this locking will ensure mutual exclusion on the \emph{deposit} method, hence making the race condition that results in improper output impossible and moreover would ensure visibility. 
+\textit{Implementation in Runner.java concurrentTestQ2(){}}. Similiar approach as the previous one. Two threads \emph{clerk1, clerk2} run concurrently and each \emph{deposits +1} in each account. Again, one thread could interrupt the second one and \emph{deposit +1} the \emph{account} after the first has read the variable but before the second \emph{deposits} the value: this would result in a lost update of a account. That correct implementation would require to use \emph{synchronize} on the \emph{deposit} method. The \emph{synchronized} keyword on a method creates an exclusive lock on the object of \emph{accounts}. Since both threads are accessing the same instance of \emph{Accounts}, this locking will ensure mutual exclusion on the \emph{deposit} method, hence making the race condition that results in improper output impossible and moreover would ensure visibility.
 
 \begin{lstlisting}[language=java]
 // cleark1 -> Deposit -> read 2 -> interrupted
    // cleark2->Deposit-> read 2 -> account+1 -> write 3
    						// cleark1 -> resumed -> account+1 -> write 3
 \end{lstlisting}
-
-
 	
 \begin{lstlisting}[language=java]
       assert (accounts.sumBalances() == 0);
@@ -119,6 +117,30 @@ Sum is 0 and should be 0.
       try { clerk1.join(); clerk2.join(); } catch (InterruptedException exn) { }
       System.out.println("Sum is " + accounts.sumBalances() + " and should be " + 0);
 \end{lstlisting}
+
+\subsection{Question 1.3}
+
+\textit{Implementation in LockAccount.java}. A separate lock for every \emph{account} was implemented by having an array of lock Objects as large as the \emph{acconts}. The size of the \emph{locks} array is kept consistent with the number of \emph{accounts} - they are declared as \emph{final}. This approach results in bigger memory footprint. The other approach could have been to lock on the accounts itself.
+
+This implementation passes both tests from Q1.1 and Q1.2:
+
+\begin{lstlisting}[language=java]
+class LockAccounts passed sequential tests
+Sum is 0 and should be 0
+Sum is 20000000 and should be 20000000
+
+class LockAccounts passed sequential tests
+Sum is 0 and should be 0
+Sum is 20000000 and should be 20000000
+
+class LockAccounts passed sequential tests
+Sum is 0 and should be 0
+Sum is 60000000 and should be 60000000
+\end{lstlisting}
+
+\emph{Transfer}: Locks both accounts in a consistent order (using unique Account serial numbers) before the transfer and so is thread-safe (does not lose updates, does not allow observation in the middle of a transfer) and deadlock-free.
+
+Explain a situation where the reported sum could be inconsistent??
 
 \section{Question 2}
 

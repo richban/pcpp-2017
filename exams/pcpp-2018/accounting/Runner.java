@@ -4,10 +4,15 @@ import java.util.Random;
 
 public class Runner {
     public static void main(String[] args) {
-        final int n = 10_000_000;
-        testAccounts(new UnsafeAccounts(n), n);
+        final int n = 30_000_000;
+        // testAccounts(new UnsafeAccounts(n), n);
         // concurrentTestQ1(new UnsafeAccounts(n), n);
-        concurrentTestQ2(new UnsafeAccounts(n), n);
+        // concurrentTestQ2(new UnsafeAccounts(n), n);
+
+        // testAccounts(new LockAccounts(n), n);
+        // concurrentTestQ1(new LockAccounts(n), n);
+        // concurrentTestQ2(new LockAccounts(n), n);
+        deadlockTestQ3(new LockAccounts(100), 100);
         // final int numberOfTransactions = 1000;
         // applyTransactionsLoop(n, numberOfTransactions, () -> new UnsafeAccounts(n));
         // applyTransactionsCollect(n, numberOfTransactions, () -> new UnsafeAccounts(n));
@@ -91,6 +96,40 @@ public class Runner {
       // System.out.println(accounts.get(0));
       try { clerk1.join(); clerk2.join(); } catch (InterruptedException exn) { }
       System.out.println("Sum is " + accounts.sumBalances() + " and should be " + 2*counts);
+    }
+
+    public static void deadlockTestQ3(Accounts accounts, final int n) {
+      final Random rnd = new Random();
+      final int transfers = 20;
+
+      if (n <= 2) {
+          System.out.println("Accounts must be larger that 2 for this test to work");
+          assert (false); // test only supports larger accounts that 2.
+          return;
+      }
+      accounts.deposit(0, 3000); accounts.deposit(1, 2000);
+
+      Thread clerk1 = new Thread(() -> {
+      for (int i=0; i<transfers; i++)
+        accounts.transfer(0, 1, rnd.nextInt(10000));
+      });
+
+      Thread clerk2 = new Thread(() -> {
+        for (int i=0; i<transfers; i++)
+          accounts.transfer(1, 0, rnd.nextInt(10000));
+      });
+
+      clerk1.start(); clerk2.start();
+      // We occasionally print the account balances during the transfer:
+      for (int i=0; i<40; i++) {
+        try { Thread.sleep(10); } catch (InterruptedException exn) { }
+        // Locking both accounts is necessary to avoid reading the
+        // balance in the middle of a transfer.
+        System.out.println(accounts.sumBalances());
+      }
+      // The auditor prints the account balance sum when the clerks are finished:
+      try { clerk1.join(); clerk2.join(); } catch (InterruptedException exn) { }
+        System.out.println("\nFinal sum is " + accounts.sumBalances());
     }
 
     // Question 1.7.1
