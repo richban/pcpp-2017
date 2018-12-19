@@ -30,7 +30,7 @@
 \setlength{\abovecaptionskip}{4pt}
 \setlength{\belowcaptionskip}{4pt}
 
-\author{Richard Bányi}
+\author{Richard Banyi}
 
 
 \title{\textsc{PCPP} - Exam 2018}
@@ -47,12 +47,6 @@
 # CPU:  null; 8 "cores"
 # Date: 2018-12-18T15:50:23+0100
 \end{lstlisting}
-
-\begin{figure}[H]
-  \includegraphics[width=0.7\textwidth]{benchmark.png}
-  \caption{Benchmark Test \textit{BenchMark}}
-  \label{fig:benchmark}
-\end{figure}
 
 \subsection{Question 1.1}
 
@@ -120,7 +114,7 @@ Sum is 0 and should be 0.
 
 \subsection{Question 1.3}
 
-\textit{Implementation in LockAccount.java}. A separate lock for every \emph{account} was implemented by having an array of lock Objects as large as the \emph{acconts}. The size of the \emph{locks} array is kept consistent with the number of \emph{accounts} - they are declared as \emph{final}. This approach results in bigger memory footprint. The other approach could have been to lock on the accounts itself.
+\textit{Implementation in LockAccount.java}. A separate lock for every \emph{account} was implemented by having an array of lock Objects as large as the \emph{acconts}. The size of the \emph{locks} array is kept consistent with the number of \emph{accounts} - they are declared as \emph{final}. This approach results in bigger memory footprint. The reported sum might be inconsistent if during the computation of the sum, some other the previously change some of the ecounts while we're still iterating over the accounts.
 
 The implementation passes both tests from Q1.1 and Q1.2:
 
@@ -138,9 +132,7 @@ Sum is 0 and should be 0
 Sum is 60000000 and should be 60000000
 \end{lstlisting}
 
-\emph{Transfer}: Locks both accounts in a consistent order (using unique Account serial numbers) before the transfer and so is thread-safe (does not lose updates, does not allow observation in the middle of a transfer) and deadlock-free.
-
-Explain a situation where the reported sum could be inconsistent??
+\emph{Transfer}: Locks both accounts in a consistent order (using unique Account serial numbers) before the transfer and so is thread-safe and deadlock-free.
 
 \subsection{Question 1.4}
 
@@ -217,6 +209,9 @@ numberOfAccounts: 1000
 1000
 \end{lstlisting}
 
+\subsection{Question 1.7.2 Stream Collect Based }
+
+\textit{Implementation in Runner.java}
 
 \section{Question 2}
 
@@ -376,7 +371,8 @@ One Parallel                   Real time:     0.106 (    0.106) extract: 178571
 One Parallel                   Real time:     0.129 (    0.128) extract: 172413
 \end{lstlisting}
 
-Experiments on \emph{BufferedPQ Ser/Serial } with different \emph{cutOff} parameters ranging from 1-4 showed similiar performance results. By increasing the \emph{bufLen=}...Still sorting an array there is no paraleziation .... 
+Experiments on \emph{BufferedPQ Ser/Serial } with different \emph{cutOff} parameters ranging from 1-4 showed similiar performance results. By increasing the \emph{bufLen=2500} and higher did not showed any significant performance improvement. This is because the sorting the arrays happens sequentialy. However the creation of the 2 recursive priority queues in the implementation of \emph{ParallelPQPair.java} showed siginificant improvements. \emph{ParallelPQPair} is 4x much faster than it's Serial implementation.
+
 
 \begin{lstlisting}[language=java]
 n 5000000  seed 3445, bufLen 100  maxDepth 4  cutOff 2
@@ -444,11 +440,44 @@ BufferedPQ Ser/Serial          Real time:     0.370 (    0.359) extract: 178571
 BufferedPQ Ser/Serial          Real time:     0.430 (    0.415) extract: 172413
 \end{lstlisting}
 
+\begin{lstlisting}[language=java]
+n 5000000  seed 3445, bufLen 1000  maxDepth 4  cutOff 4
+BufferedPQ Par                 Real time:     0.922 (    0.638) extract: 5000000
+BufferedPQ Par                 Real time:     0.230 (    0.090) extract: 2500000
+BufferedPQ Par                 Real time:     0.154 (    0.070) extract: 1666666
+BufferedPQ Par                 Real time:     0.179 (    0.121) extract: 1250000
+BufferedPQ Par                 Real time:     0.122 (    0.069) extract: 1000000
+BufferedPQ Par                 Real time:     0.110 (    0.071) extract: 833333
+BufferedPQ Par                 Real time:     0.114 (    0.072) extract: 714285
+BufferedPQ Par                 Real time:     0.159 (    0.086) extract: 625000
+BufferedPQ Par                 Real time:     0.099 (    0.073) extract: 555555
+BufferedPQ Par                 Real time:     0.150 (    0.117) extract: 500000
+BufferedPQ Par                 Real time:     0.148 (    0.125) extract: 454545
+BufferedPQ Par                 Real time:     0.098 (    0.073) extract: 416666
+BufferedPQ Par                 Real time:     0.091 (    0.072) extract: 384615
+BufferedPQ Par                 Real time:     0.099 (    0.075) extract: 357142
+BufferedPQ Par                 Real time:     0.101 (    0.081) extract: 333333
+BufferedPQ Par                 Real time:     0.131 (    0.116) extract: 312500
+BufferedPQ Par                 Real time:     0.090 (    0.076) extract: 294117
+BufferedPQ Par                 Real time:     0.084 (    0.070) extract: 277777
+BufferedPQ Par                 Real time:     0.089 (    0.076) extract: 263157
+BufferedPQ Par                 Real time:     0.146 (    0.078) extract: 250000
+BufferedPQ Par                 Real time:     0.081 (    0.070) extract: 238095
+BufferedPQ Par                 Real time:     0.078 (    0.068) extract: 227272
+BufferedPQ Par                 Real time:     0.077 (    0.067) extract: 217391
+BufferedPQ Par                 Real time:     0.130 (    0.120) extract: 208333
+BufferedPQ Par                 Real time:     0.077 (    0.068) extract: 200000
+BufferedPQ Par                 Real time:     0.077 (    0.068) extract: 192307
+BufferedPQ Par                 Real time:     0.080 (    0.072) extract: 185185
+BufferedPQ Par                 Real time:     0.074 (    0.066) extract: 178571
+BufferedPQ Par                 Real time:     0.075 (    0.067) extract: 172413
+\end{lstlisting}
+
 \subsection{Question 2.2: Parallel Initialisation}
 
 \textit{Implementation: ParallelPQPair.java}.
 
-The implementation of \emph{ParallelPQPair} is done by \emph{tasks}. A task is created for each \textit{left, right PQ} recursive data structure.
+The implementation of \emph{ParallelPQPair} is done by creating a thrad for each \textit{left, right PQ} recursive data structure.
 
 \section{Question 3: Message Passing}
 

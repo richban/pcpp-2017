@@ -1,4 +1,5 @@
 import java.util.stream.*;
+import java.util.stream.Collectors;
 import java.util.function.*;
 import java.util.Random;
 import java.util.Arrays;
@@ -34,9 +35,9 @@ public class Runner {
 
         final int numberOfTransactions = 1000;
         // applyTransactionsLoop(n, numberOfTransactions, () -> new UnsafeAccounts(n));
-        applyTransactionsLoop(n, numberOfTransactions, () -> new STMAccounts(n));
-        applyTransactionsLoop(n, numberOfTransactions, () -> new CASAccounts(n));
-        // applyTransactionsCollect(n, numberOfTransactions, () -> new CASAccounts(n));
+        // applyTransactionsLoop(n, numberOfTransactions, () -> new STMAccounts(n));
+        // applyTransactionsLoop(n, numberOfTransactions, () -> new CASAccounts(n));
+        applyTransactionsCollect(n, numberOfTransactions, () -> new CASAccounts(n));
     }
 
     public static void testAccounts(Accounts accounts, final int n) {
@@ -196,7 +197,7 @@ public class Runner {
         System.out.println();
         // transaction.forEach(t -> System.out.println(t.toString()));
         System.out.println(accounts.sumBalances());
-        transaction.parallel().forEach(t -> {
+        transaction.forEach(t -> {
           if (t.from == -1) {
             // System.out.println(t.toString());
             accounts.deposit(t.to, t.amount);
@@ -214,17 +215,27 @@ public class Runner {
         // System.out.println(accounts.getSpan());
 
     }
- //
- //    // Question 1.7.2
- //    private static void applyTransactionsCollect(int numberOfAccounts, int numberOfTransactions,
- //                                                 Supplier<Accounts> generator) {
- //        // remember that if "from" is -1 in transaction then it is considered a deposit
- //        // otherwise it is a transfer.
- //        Stream<Transaction> transactions = IntStream.range(0, numberOfTransactions).parallel()
- //                .mapToObj((i) -> new Transaction(numberOfAccounts, i));
- //
- //        // Implement applying each transaction by using the collect stream operator.
- //        // Modify it to run with a parallel stream.
- // // YOUR CODE GOES HERE
- //    }
+
+    // Question 1.7.2
+    private static void applyTransactionsCollect(int numberOfAccounts, int numberOfTransactions,
+                                                 Supplier<Accounts> generator) {
+        // remember that if "from" is -1 in transaction then it is considered a deposit
+        // otherwise it is a transfer.
+        Stream<Transaction> transactions = IntStream.range(0, numberOfTransactions).parallel()
+                .mapToObj((i) -> new Transaction(numberOfAccounts, i));
+
+        // Implement applying each transaction by using the collect stream operator.
+        // Modify it to run with a parallel stream.
+        transactions.parallel().map((t) -> {
+          final Accounts accounts = generator.get();
+          if (t.from == -1) {
+            accounts.deposit(t.to, t.amount);
+          } else {
+            accounts.transfer(t.from, t.to, t.amount);
+          }
+          return accounts;
+        }).collect(Collectors.reducing((a1, a2) -> {
+          return a1.transferAccount(a2);
+        }));
+    }
 }

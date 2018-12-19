@@ -20,13 +20,13 @@ public class Runner {
         final int maxDepth = useArg(args,99,4);
         final int cutOff = 4;
 
-        final int extract = n / extractFract;
+        // final int extract = n / extractFract;
 
         // keep only what you need when you create a file with your experimental results
-        System.out.printf("n %d  seed %d, extract %d  bufLen %d  maxDepth %d  cutOff %d%n",n,seed,extract,bufLen,maxDepth,cutOff);
+        // System.out.printf("n %d  seed %d, extract %d  bufLen %d  maxDepth %d  cutOff %d%n",n,seed,extract,bufLen,maxDepth,cutOff);
         SystemInfo();
 
-        int[] a = generateRandom(n,seed); // useful to be able to compare output of the different implementations
+        // int[] a = generateRandom(n,seed); // useful to be able to compare output of the different implementations
 
 
         // ----------------------------------------------------------------------
@@ -65,10 +65,20 @@ public class Runner {
         //   timePQ(a,extract,(x)-> new BufferedPQ        (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,  new SerialPQPair())),  "BufferedPQ Ser/Serial");
         // }
 
+        // ----------------------------------------------------------------------
+        //TESTING SerialPQPair
+
+        System.out.printf("n %d  seed %d, bufLen %d  maxDepth %d  cutOff %d%n",n,seed,bufLen,maxDepth,cutOff);
+        for(int count = 1; count < 30; count++){
+          final int extract = n / count;
+          int[] a = generateRandom(n,seed); // useful to be able to compare output of the different implementations
+          timePQ(a,extract,(x)-> new BufferedPQ        (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,  new ParallelPQPair())),"BufferedPQ Par");
+        }
+
         // timePQ(a,extract,(x)-> new BufferedPQ        (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,  new SerialPQPair())),  "BufferedPQ Ser/Serial");
 
         // // the following works if you happen to come up with something that looks like my solution; you can try to do this or you can adjust the calls -- up to you
-        timePQ(a,extract,(x)-> new BufferedPQ        (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,  new ParallelPQPair())),"BufferedPQ Par/Serial");
+        // timePQ(a,extract,(x)-> new BufferedPQ        (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,  new ParallelPQPair())),"BufferedPQ Par/Serial");
         // timePQ(a,extract,(x)-> new BufferedPQ        (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,true,new SerialPQPair())),  "BufferedPQ Ser/Parallel");
         // timePQ(a,extract,(x)-> new BufferedPQ        (new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,true,new ParallelPQPair())),"BufferedPQ Par/Parallel");
         // timePQ(a,extract,(x)-> new BufferedPQSolution(new Parameters(x,0,x.length,0,bufLen,cutOff,maxDepth,false,  new SerialPQPair())),  "Solution Ser/Serial");

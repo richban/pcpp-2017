@@ -16,7 +16,7 @@ public class LockAccounts implements Accounts {
         this.serials = new AtomicInteger[this.lockCount];
         for (int account = 0; account < this.lockCount; account++) {
           this.locks[account] = new Object();
-          this.serials[account] = new AtomicInteger(0);
+          this.serials[account] = new AtomicInteger(account);
         }
     }
 
@@ -33,7 +33,9 @@ public class LockAccounts implements Accounts {
     public int sumBalances() {
         int sum = 0;
         for (int i = 0; i < accounts.length; i++) {
+          synchronized(locks[i]) {
             sum += accounts[i];
+          }
         }
         return sum;
     }
