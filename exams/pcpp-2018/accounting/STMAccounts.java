@@ -64,17 +64,16 @@ public class STMAccounts implements Accounts {
       });
     }
 
-
     public void deposit(int to, int amount) {
       atomic(() -> {
-        accounts[to].getAndSet(amount);
+        accounts[to].increment(amount);
       });
     }
 
     public void transfer(int from, int to, int amount) {
       atomic(() -> {
-        accounts[from].getAndSet(-amount);
-        accounts[to].getAndSet(+amount);
+        accounts[from].increment(-amount);
+        accounts[to].increment(+amount);
       });
     }
 

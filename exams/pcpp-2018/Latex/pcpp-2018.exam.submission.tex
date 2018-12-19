@@ -150,7 +150,25 @@ Explain a situation where the reported sum could be inconsistent??
 
 \textit{Implementation in STMAccounts.java}.
 
-Using one large transaction to compute the \emph{sumBalances} results to higher chances that the transcation will fail and be rolledback and restarted. On the other hand using transactions for each account gives smaller transactions a thus less likelihood that the transaction fails. However, in this case the \emph{sumBalances} might return inconsistent data. 
+Using one large transaction to compute the \emph{sumBalances} results to higher chances that the transcation will fail and be rolledback and restarted. On the other hand using transactions for each account gives smaller transactions a thus less likelihood that the transaction fails. However, in this case the \emph{sumBalances} might return inconsistent data.
+
+Both Q1.1 and Q1.2 tests passes.
+
+\begin{lstlisting}[language=java]
+Dec 19, 2018 8:03:36 AM org.multiverse.api.GlobalStmInstance <clinit>
+INFO: Initializing GlobalStmInstance using factoryMethod 'org.multiverse.stms.gamma.GammaStm.createFast'.
+Dec 19, 2018 8:03:36 AM org.multiverse.api.GlobalStmInstance <clinit>
+INFO: Successfully initialized GlobalStmInstance using factoryMethod 'org.multiverse.stms.gamma.GammaStm.createFast'.
+Sum is 0 and should be 0
+Sum is 20000000 and should be 20000000
+
+Dec 19, 2018 8:04:39 AM org.multiverse.api.GlobalStmInstance <clinit>
+INFO: Initializing GlobalStmInstance using factoryMethod 'org.multiverse.stms.gamma.GammaStm.createFast'.
+Dec 19, 2018 8:04:39 AM org.multiverse.api.GlobalStmInstance <clinit>
+INFO: Successfully initialized GlobalStmInstance using factoryMethod 'org.multiverse.stms.gamma.GammaStm.createFast'.
+Sum is 0 and should be 0
+Sum is 4000000 and should be 4000000
+\end{lstlisting}
 
 \section{Question 2}
 
