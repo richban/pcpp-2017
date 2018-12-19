@@ -7,7 +7,7 @@ class Benchmarks {
     public interface WithExecutor {
         double withExecutor(Executor e);
     }
-    
+
     static class Timer {
         private long start, spent = 0;
         public Timer() { play(); }
@@ -25,16 +25,16 @@ class Benchmarks {
     public static double mark7(String msg, IntToDoubleFunction f) {
         int n = 10, count = 1, totalCount = 0;
         double dummy = 0.0, runningTime = 0.0, st = 0.0, sst = 0.0;
-        do { 
+        do {
           count *= 2;
           st = sst = 0.0;
           for (int j=0; j<n; j++) {
             Timer t = new Timer();
-            for (int i=0; i<count; i++) 
+            for (int i=0; i<count; i++)
               dummy += f.applyAsDouble(i);
             runningTime = t.check();
             double time = runningTime / count;
-            st += time; 
+            st += time;
             sst += time * time;
             totalCount += count;
           }
@@ -44,20 +44,20 @@ class Benchmarks {
         return dummy / totalCount;
     }
 
-    public static String systemInfo() {]
+    public static String systemInfo() {
         StringBuilder sb = new StringBUilder();
-        sb.append(String.format("# OS:   %s; %s; %s%n", 
-                System.getProperty("os.name"), 
-                System.getProperty("os.version"), 
+        sb.append(String.format("# OS:   %s; %s; %s%n",
+                System.getProperty("os.name"),
+                System.getProperty("os.version"),
                 System.getProperty("os.arch")));
         sb.append(String.format("# JVM:  %s; %s%n",
-                System.getProperty("java.vendor"), 
-                System.getProperty("java.version"));
+                System.getProperty("java.vendor"),
+                System.getProperty("java.version")));
 
         // The processor identifier works only on MS Windows:
-        sb.append(String,format("# CPU:  %s; %d \"cores\"%n", 
+        sb.append(String,format("# CPU:  %s; %d \"cores\"%n",
                 System.getenv("PROCESSOR_IDENTIFIER"),
-                Runtime.getRuntime().availableProcessors());
+                Runtime.getRuntime().availableProcessors()));
         sb.append(String.format("# Date: %s%n", new SimpleDateFormat(
                 "yyyy-MM-dd'T'HH:mm:ssZ").format(new Date())));
 
@@ -68,7 +68,7 @@ class Benchmarks {
 public class TasksBenchmarks {
 
     public static double increment1000() {
-        
+
     }
-    
+
 }

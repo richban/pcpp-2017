@@ -14,7 +14,6 @@ public class TestLongCounterNaiv {
     System.out.println("Press Enter to get the current value:");
     while (true) {
       System.in.read();         // Wait for enter key
-      long 
       System.out.println(lc.get()); 
     }
   }
@@ -25,7 +24,7 @@ class LongCounter {
   public  void increment() {
     count = count + 1;
   }
-  public  long get() { 
-    return count; 
+  public  long get() {
+    return count;
   }
 }
