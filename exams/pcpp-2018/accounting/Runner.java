@@ -3,6 +3,8 @@ import java.util.stream.Collectors;
 import java.util.function.*;
 import java.util.Random;
 import java.util.Arrays;
+import java.util.Optional;
+
 
 // RUN THIS FILE AS FOLLOWS
 // rm -f *.class && javac Runner.java -cp ./../lib/multiverse-core-0.7.0.jar STMAccounts.java && java -cp ./../lib/multiverse-core-0.7.0.jar:. Runner
@@ -226,7 +228,7 @@ public class Runner {
 
         // Implement applying each transaction by using the collect stream operator.
         // Modify it to run with a parallel stream.
-        transactions.parallel().map((t) -> {
+        Accounts r =  transactions.parallel().map((t) -> {
           final Accounts accounts = generator.get();
           if (t.from == -1) {
             accounts.deposit(t.to, t.amount);
@@ -235,7 +237,10 @@ public class Runner {
           }
           return accounts;
         }).collect(Collectors.reducing((a1, a2) -> {
-          return a1.transferAccount(a2);
+          a1.transferAccount(a2);
+          return a1;
         }));
+
+        return r.get().sumBalances();
     }
 }
