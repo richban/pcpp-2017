@@ -7,6 +7,7 @@ public class LockAccountsFast implements Accounts {
     private int[] accounts;
     private int[] sums;
     private final Object[] locks;
+    private final Object[] acclocks;
     private final int lockCount;
 
     public LockAccountsFast(int n, int lockCount) {
@@ -14,6 +15,9 @@ public class LockAccountsFast implements Accounts {
         this.lockCount = lockCount;
         this.locks = new Object[this.lockCount];
         this.sums = new int[this.lockCount];
+        this.acclocks = new Object[n];
+        for (int account = 0; account < n; account++)
+          this.acclocks[account] = new Object();
         for (int stripe = 0; stripe < this.lockCount; stripe++)
           this.locks[stripe] = new Object();
     }
@@ -30,41 +34,44 @@ public class LockAccountsFast implements Accounts {
     }
 
     public int get(int account) {
-      Thread thread = Thread.currentThread();
-      final int h = getHash(thread);
-      synchronized(locks[account]){
+      synchronized (acclocks[account]) {
         return accounts[account];
       }
     }
 
     public int sumBalances() {
-        int sum = 0;
-        for (int i = 0; i < lockCount ; i++) {
-          synchronized(locks[i]) {
-              sum += sums[i];
-          }
+      AtomicInteger result = new AtomicInteger(0);
+      lockAllAndThen(() -> {
+        for (int stripe = 0; stripe < lockCount; stripe++) {
+          result.getAndAdd(sums[stripe]);
         }
-        return sum;
+      });
+      return result.get();
     }
 
     public void deposit(int to, int amount) {
       Thread thread = Thread.currentThread();
       final int h = getHash(thread);
-        synchronized(locks[to]) {
-          final int hash = h % accounts.length;
-          accounts[to] += amount;
-          sums[hash] += amount;
-        }
+      final int stripe = h % accounts.length;
+
+      synchronized (acclocks[to]) {
+        accounts[to] += amount;
+      }
+      synchronized (locks[stripe]) {
+        sums[stripe] += amount;
+      }
     }
 
     public void transfer(int from, int to, int amount) {
-      accounts[from] -= amount;
-      accounts[to] += amount;
+      synchronized (acclocks[from]) { accounts[from] -= amount; }
+      synchronized (acclocks[to]) { accounts[to] += amount; }
     }
 
     public void transferAccount(Accounts other) {
         for (int i = 0; i < accounts.length; i++) {
-            accounts[i] += other.get(i);
+          synchronized (acclocks[i]) {
+            this.deposit(i, other.get(i));
+          }
         }
     }
 
@@ -77,5 +84,19 @@ public class LockAccountsFast implements Accounts {
             }
         }
         return res;
+    }
+
+    // Lock all stripes, perform the action, then unlock all stripes
+    private void lockAllAndThen(Runnable action) {
+      lockAllAndThen(0, action);
+    }
+
+    private void lockAllAndThen(int nextStripe, Runnable action) {
+      if (nextStripe >= lockCount)
+        action.run();
+      else
+        synchronized (locks[nextStripe]) {
+          lockAllAndThen(nextStripe + 1, action);
+        }
     }
 }
