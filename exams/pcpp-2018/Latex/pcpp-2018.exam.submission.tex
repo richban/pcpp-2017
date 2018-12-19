@@ -142,6 +142,16 @@ Sum is 60000000 and should be 60000000
 
 Explain a situation where the reported sum could be inconsistent??
 
+\subsection{Question 1.4}
+
+\textit{Implementation in LockAccountsFast.java}.
+
+\subsection{Question 1.5}
+
+\textit{Implementation in STMAccounts.java}.
+
+Using one large transaction to compute the \emph{sumBalances} results to higher chances that the transcation will fail and be rolledback and restarted. On the other hand using transactions for each account gives smaller transactions a thus less likelihood that the transaction fails. However, in this case the \emph{sumBalances} might return inconsistent data. 
+
 \section{Question 2}
 
 Benchmarked on the following platform:

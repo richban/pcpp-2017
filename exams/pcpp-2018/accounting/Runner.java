@@ -2,9 +2,12 @@ import java.util.stream.*;
 import java.util.function.*;
 import java.util.Random;
 
+import org.multiverse.api.references.*;
+import static org.multiverse.api.StmUtils.*;
+
 public class Runner {
     public static void main(String[] args) {
-        final int n = 30_000_000;
+        final int n = 10_000_000;
         // testAccounts(new UnsafeAccounts(n), n);
         // concurrentTestQ1(new UnsafeAccounts(n), n);
         // concurrentTestQ2(new UnsafeAccounts(n), n);
@@ -13,8 +16,10 @@ public class Runner {
         // concurrentTestQ1(new LockAccounts(n), n);
         // concurrentTestQ2(new LockAccounts(n), n);
         // deadlockTestQ3(new LockAccounts(100), 100);
-        concurrentTestQ2(new LockAccountsFast(n, 2), n);
 
+        // concurrentTestQ2(new LockAccountsFast(n, 2), n);
+
+        deadlockTestQ4(new STMAccounts(n), n);
         // final int numberOfTransactions = 1000;
         // applyTransactionsLoop(n, numberOfTransactions, () -> new UnsafeAccounts(n));
         // applyTransactionsCollect(n, numberOfTransactions, () -> new UnsafeAccounts(n));
@@ -132,6 +137,36 @@ public class Runner {
       // The auditor prints the account balance sum when the clerks are finished:
       try { clerk1.join(); clerk2.join(); } catch (InterruptedException exn) { }
         System.out.println("\nFinal sum is " + accounts.sumBalances());
+    }
+
+    public static void deadlockTestQ4(Accounts accounts, final int n) {
+      final Random rnd = new Random();
+      final int transfers = 2_000_000;
+
+      accounts.deposit(0, 3000); accounts.deposit(1, 2000);
+
+      Thread clerk1 = new Thread(() -> {
+      for (int i=0; i<transfers; i++)
+        accounts.transfer(0, 1, rnd.nextInt(10000));
+      });
+
+      Thread clerk2 = new Thread(() -> {
+        for (int i=0; i<transfers; i++)
+          accounts.transfer(1, 0, rnd.nextInt(10000));
+      });
+
+      clerk1.start(); clerk2.start();
+      // We may occasionally print the account balances during the transfers:
+      for (int i=0; i<40; i++) {
+        try { Thread.sleep(100); } catch (InterruptedException exn) { }
+        atomic(() -> { System.out.println(accounts.get(0) + accounts.get(1)); });
+        // account1.deposit(10);
+        // long sum = atomic(() -> account1.get() + account2.get());
+        // System.out.println(sum);
+      }
+      // The auditor prints the account balance sum when the clerks are finished:
+      try { clerk1.join(); clerk2.join(); } catch (InterruptedException exn) { }
+      System.out.println(accounts.get(0) + accounts.get(1));
     }
 
     // Question 1.7.1
