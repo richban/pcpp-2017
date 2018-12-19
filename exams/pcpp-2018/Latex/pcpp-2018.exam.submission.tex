@@ -122,7 +122,7 @@ Sum is 0 and should be 0.
 
 \textit{Implementation in LockAccount.java}. A separate lock for every \emph{account} was implemented by having an array of lock Objects as large as the \emph{acconts}. The size of the \emph{locks} array is kept consistent with the number of \emph{accounts} - they are declared as \emph{final}. This approach results in bigger memory footprint. The other approach could have been to lock on the accounts itself.
 
-This implementation passes both tests from Q1.1 and Q1.2:
+The implementation passes both tests from Q1.1 and Q1.2:
 
 \begin{lstlisting}[language=java]
 class LockAccounts passed sequential tests
@@ -169,6 +169,54 @@ INFO: Successfully initialized GlobalStmInstance using factoryMethod 'org.multiv
 Sum is 0 and should be 0
 Sum is 4000000 and should be 4000000
 \end{lstlisting}
+
+\subsection{Question 1.6}
+
+\textit{Implementation in CASAccounts.java}.
+
+The implementation passes both tests from Q1.1 and Q1.2:
+
+\begin{lstlisting}[language=java]
+class CASAccounts passed sequential tests
+Sum is 0 and should be 0
+Sum is 10000000 and should be 10000000
+
+class CASAccounts passed sequential tests
+Sum is 0 and should be 0
+Sum is 20000000 and should be 20000000
+
+class CASAccounts passed sequential tests
+Sum is 0 and should be 0
+Sum is 10000000 and should be 10000000
+\end{lstlisting}
+
+\subsection{Question 1.7.1 Stream Loop Based}
+
+\textit{Implementation in Runner.java}. The \emph{Stream<Transaction>} always generates \emph{deposit} transactions. \emph{numberofaccounts * each account = after calling sum 1000000}. Thus the computation is correct.
+
+\begin{lstlisting}[language=java]
+Dec 19, 2018 10:10:42 AM org.multiverse.api.GlobalStmInstance <clinit>
+INFO: Initializing GlobalStmInstance using factoryMethod 'org.multiverse.stms.gamma.GammaStm.createFast'.
+Dec 19, 2018 10:10:42 AM org.multiverse.api.GlobalStmInstance <clinit>
+INFO: Successfully initialized GlobalStmInstance using factoryMethod 'org.multiverse.stms.gamma.GammaStm.createFast'.
+numberOfAccounts: 1000
+0
+1000000
+1000
+1000
+1000
+1000
+1000
+numberOfAccounts: 1000
+0
+1000000
+1000
+1000
+1000
+1000
+1000
+\end{lstlisting}
+
 
 \section{Question 2}
 

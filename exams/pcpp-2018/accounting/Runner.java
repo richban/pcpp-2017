@@ -1,17 +1,18 @@
 import java.util.stream.*;
 import java.util.function.*;
 import java.util.Random;
+import java.util.Arrays;
 
 // RUN THIS FILE AS FOLLOWS
 // rm -f *.class && javac Runner.java -cp ./../lib/multiverse-core-0.7.0.jar STMAccounts.java && java -cp ./../lib/multiverse-core-0.7.0.jar:. Runner
 
 // The Multiverse transactional memory library:
-import org.multiverse.api.references.*;
-import static org.multiverse.api.StmUtils.*;
+// import org.multiverse.api.references.*;
+// import static org.multiverse.api.StmUtils.*;
 
 public class Runner {
     public static void main(String[] args) {
-        final int n = 1_000_000;
+        final int n = 5_000_000;
         // testAccounts(new UnsafeAccounts(n), n);
         // concurrentTestQ1(new UnsafeAccounts(n), n);
         // concurrentTestQ2(new UnsafeAccounts(n), n);
@@ -23,13 +24,19 @@ public class Runner {
 
         // concurrentTestQ2(new LockAccountsFast(n, 2), n);
 
-        concurrentTestQ1(new STMAccounts(n), n);
-        concurrentTestQ2(new STMAccounts(n), n);
-        deadlockTestQ4(new STMAccounts(n), n);
+        // concurrentTestQ1(new STMAccounts(n), n);
+        // concurrentTestQ2(new STMAccounts(n), n);
+        // deadlockTestQ4(new STMAccounts(n), n);
 
-        // final int numberOfTransactions = 1000;
+        // testAccounts(new CASAccounts(n), n);
+        // concurrentTestQ1(new CASAccounts(n), n);
+        // concurrentTestQ2(new CASAccounts(n), n);
+
+        final int numberOfTransactions = 1000;
         // applyTransactionsLoop(n, numberOfTransactions, () -> new UnsafeAccounts(n));
-        // applyTransactionsCollect(n, numberOfTransactions, () -> new UnsafeAccounts(n));
+        applyTransactionsLoop(n, numberOfTransactions, () -> new STMAccounts(n));
+        applyTransactionsLoop(n, numberOfTransactions, () -> new CASAccounts(n));
+        // applyTransactionsCollect(n, numberOfTransactions, () -> new CASAccounts(n));
     }
 
     public static void testAccounts(Accounts accounts, final int n) {
@@ -165,7 +172,7 @@ public class Runner {
       // We may occasionally print the account balances during the transfers:
       for (int i=0; i<40; i++) {
         try { Thread.sleep(100); } catch (InterruptedException exn) { }
-        atomic(() -> { System.out.println(accounts.get(0) + accounts.get(1)); });
+        // atomic(() -> { System.out.println(accounts.get(0) + accounts.get(1)); });
         // accounts.deposit(0, 10);
         // long sum = atomic(() -> accounts.get(0) + accounts.get(1));
         // System.out.println(sum);
@@ -176,17 +183,37 @@ public class Runner {
     }
 
     // Question 1.7.1
- //    private static void applyTransactionsLoop(int numberOfAccounts, int numberOfTransactions,
- //            Supplier<Accounts> generator) {
- //        // remember that if "from" is -1 in transaction then it is considered a deposit
- //        // otherwise it is a transfer.
- //        final Accounts accounts = generator.get();
- //        Stream<Transaction> transaction = IntStream.range(0, numberOfTransactions).parallel()
- //                .mapToObj((i) -> new Transaction(numberOfAccounts, i));
- //        // implement applying each transaction by using a for-loop
- //        // Modify it to run with a parallel stream.
- // // YOUR CODE GOES HERE
- //    }
+    private static void applyTransactionsLoop(int numberOfAccounts, int numberOfTransactions,
+            Supplier<Accounts> generator) {
+        // remember that if "from" is -1 in transaction then it is considered a deposit
+        // otherwise it is a transfer.
+        final Accounts accounts = generator.get();
+        Stream<Transaction> transaction = IntStream.range(0, numberOfTransactions).parallel()
+                .mapToObj((i) -> new Transaction(numberOfAccounts, i));
+        // implement applying each transaction by using a for-loop
+        // Modify it to run with a parallel stream.
+        System.out.printf("numberOfAccounts: %d", numberOfTransactions);
+        System.out.println();
+        // transaction.forEach(t -> System.out.println(t.toString()));
+        System.out.println(accounts.sumBalances());
+        transaction.parallel().forEach(t -> {
+          if (t.from == -1) {
+            // System.out.println(t.toString());
+            accounts.deposit(t.to, t.amount);
+          } else {
+            // System.out.println(t.toString());
+            accounts.transfer(t.from, t.to, t.amount);
+          }
+        });
+
+        // System.out.println(Arrays.toString(accounts.getAccounts()));
+        System.out.println(accounts.sumBalances());
+        for(int i = 0; i < 5; i++) {
+          System.out.println(accounts.get(i));
+        }
+        // System.out.println(accounts.getSpan());
+
+    }
  //
  //    // Question 1.7.2
  //    private static void applyTransactionsCollect(int numberOfAccounts, int numberOfTransactions,

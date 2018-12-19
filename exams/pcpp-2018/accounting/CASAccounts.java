@@ -2,20 +2,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 public class CASAccounts implements Accounts {
-    private final AtomicInteger[] accounts;
-    private int sum;
+    private AtomicInteger[] accounts;
+    private AtomicInteger sum;
 
     public CASAccounts(int n) {
       accounts = new AtomicInteger[n];
+      sum = new AtomicInteger(0);
       for (int i = 0; i < accounts.length; i++) {
-        accounts[i] = AtomicInteger(0);
+        accounts[i] = new AtomicInteger(0);
       }
     }
 
     public void init(int n) {
       accounts = new AtomicInteger[n];
       for (int i = 0; i < accounts.length; i++) {
-        accounts[i] = AtomicInteger(0);
+        accounts[i] = new AtomicInteger(0);
       }
     }
 
@@ -23,12 +24,12 @@ public class CASAccounts implements Accounts {
         return accounts[account].get();
     }
 
+    public int getSpan() {
+      return accounts.length;
+    }
+
     public int sumBalances() {
-        for (int i = 0; i < accounts.length; i++) {
-          final int index = i;
-          sum += accounts[i];
-        }
-        return sum;
+      return sum.get();
     }
 
     public void deposit(int to, int amount) {
@@ -36,11 +37,21 @@ public class CASAccounts implements Accounts {
       do {
         oldValue = accounts[to].get();
       } while(!accounts[to].compareAndSet(oldValue, oldValue + amount));
+      sum.getAndAdd(amount);
     }
 
     public void transfer(int from, int to, int amount) {
-        accounts[from] -= amount;
-        accounts[to] += amount;
+      int oldValue;
+      int newValue;
+
+      do {
+        oldValue = accounts[from].get();
+        newValue = oldValue - amount;
+      } while(!accounts[from].compareAndSet(oldValue, newValue));
+      do {
+        oldValue = accounts[to].get();
+        newValue = oldValue + amount;
+      } while(!accounts[to].compareAndSet(oldValue, newValue));
     }
 
     public void transferAccount(Accounts other) {
@@ -52,6 +63,11 @@ public class CASAccounts implements Accounts {
           oldValue = this.get(index);
           newValue = delta + oldValue;
         } while(!accounts[index].compareAndSet(oldValue, newValue));
+        sum.getAndAdd(other.get(index));
       }
+    }
+
+    public int[] getAccounts() {
+      return IntStream.range(0, getSpan()).map((acc) -> accounts[acc].get()).toArray();
     }
 }

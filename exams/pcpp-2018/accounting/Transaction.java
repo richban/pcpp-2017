@@ -21,14 +21,14 @@ public class Transaction {
         if (i < n) { // we initialize all accounts to some (arbitrary) value
             from = -1;
             to = i;
-            amount = 1000; 
+            amount = 1000;
         } else {
             Random rng = new Random(i ^ 213412431);
             // chose pseudo random source and destination
-            from = (rng.nextInt() & 0x7fffffff) % n; 
-            to = (rng.nextInt() & 0x7fffffff) % n; 
+            from = (rng.nextInt() & 0x7fffffff) % n;
+            to = (rng.nextInt() & 0x7fffffff) % n;
             // choose pseudo random amount 0..255
-            amount = rng.nextInt() & 0xff; 
+            amount = rng.nextInt() & 0xff;
         }
     }
 
