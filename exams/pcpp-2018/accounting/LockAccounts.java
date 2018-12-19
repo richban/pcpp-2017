@@ -7,15 +7,17 @@ public class LockAccounts implements Accounts {
     private int[] accounts;
     private final int lockCount;
     private final Object[] locks;
-    private final AtomicIntegerArray serials;
+    private final AtomicInteger[] serials;
 
     public LockAccounts(int n) {
         this.accounts = new int[n];
         this.lockCount = n;
         this.locks = new Object[this.lockCount];
-        this.serials = new AtomicIntegerArray(this.accounts);
-        for (int account = 0; account < this.lockCount; account++)
+        this.serials = new AtomicInteger[this.lockCount];
+        for (int account = 0; account < this.lockCount; account++) {
           this.locks[account] = new Object();
+          this.serials[account] = new AtomicInteger(0);
+        }
     }
 
     public void init(int n) {
@@ -43,7 +45,7 @@ public class LockAccounts implements Accounts {
     }
 
     public void transfer(int from, int to, int amount) {
-      if (serials.get(from) < serials.get(to)) {
+      if (serials[from].get() < serials[to].get()) {
         synchronized (locks[from]) { // from <= to
           synchronized (locks[to]) {
             accounts[from] -= amount;
